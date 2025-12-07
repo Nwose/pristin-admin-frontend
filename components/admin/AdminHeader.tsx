@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Bell, Menu, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 
 export default function AdminHeader() {
   const pathname = usePathname();
@@ -19,18 +20,18 @@ export default function AdminHeader() {
 
   // 🔥 Updated nav order — Loans is now 3rd
   const navLinks = [
-    { name: "Dashboard", href: "/admin/dashboard" },
-    { name: "Users", href: "/admin/users" },
+    { name: "Dashboard", href: FrontendRoutes.dashboard },
+    { name: "Users", href: FrontendRoutes.users },
     { name: "Loans", href: "#" }, // placeholder, dropdown replaces the click
-    { name: "Investments", href: "/admin/investments" },
-    { name: "KYC", href: "/admin/kyc" },
-    { name: "Penalty", href: "/admin/penalty" },
+    { name: "Investments", href: FrontendRoutes.investments },
+    { name: "KYC", href: FrontendRoutes.kyc },
+    { name: "Penalty", href: FrontendRoutes.penalty },
   ];
 
   // 🔥 Logout handler
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-    router.push("/admin/login");
+    router.push(FrontendRoutes.login);
   };
 
   return (
@@ -54,9 +55,9 @@ export default function AdminHeader() {
         <nav className="hidden md:flex items-center space-x-8 relative">
           {/* Dashboard + Users */}
           <Link
-            href="/admin/dashboard"
+            href={FrontendRoutes.dashboard}
             className={`pb-1 transition ${
-              pathname.startsWith("/admin/dashboard")
+              pathname.startsWith(FrontendRoutes.dashboard)
                 ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -65,9 +66,9 @@ export default function AdminHeader() {
           </Link>
 
           <Link
-            href="/admin/users"
+            href={FrontendRoutes.users}
             className={`pb-1 transition ${
-              pathname.startsWith("/admin/users")
+              pathname.startsWith(FrontendRoutes.users)
                 ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -80,8 +81,8 @@ export default function AdminHeader() {
             <button
               onClick={() => setLoanDropdownOpen(!loanDropdownOpen)}
               className={`pb-1 flex items-center transition ${
-                pathname.startsWith("/admin/loans") ||
-                pathname.startsWith("/admin/loan-products")
+                pathname.startsWith(FrontendRoutes.loans) ||
+                pathname.startsWith(FrontendRoutes.loanProducts)
                   ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                   : "text-gray-600 hover:text-gray-900"
               }`}
@@ -97,14 +98,14 @@ export default function AdminHeader() {
             {loanDropdownOpen && (
               <div className="absolute bg-white border border-gray-200 rounded-md shadow-md mt-2 w-40 z-50">
                 <Link
-                  href="/admin/loans"
+                  href={FrontendRoutes.loans}
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                   onClick={() => setLoanDropdownOpen(false)}
                 >
                   Loan Applications
                 </Link>
                 <Link
-                  href="/admin/loan-products"
+                  href={FrontendRoutes.loanProducts}
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                   onClick={() => setLoanDropdownOpen(false)}
                 >
@@ -116,9 +117,9 @@ export default function AdminHeader() {
 
           {/* Investments */}
           <Link
-            href="/admin/investments"
+            href={FrontendRoutes.investments}
             className={`pb-1 transition ${
-              pathname.startsWith("/admin/investments")
+              pathname.startsWith(FrontendRoutes.investments)
                 ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -128,9 +129,9 @@ export default function AdminHeader() {
 
           {/* KYC */}
           <Link
-            href="/admin/kyc"
+            href={FrontendRoutes.kyc}
             className={`pb-1 transition ${
-              pathname.startsWith("/admin/kyc")
+              pathname.startsWith(FrontendRoutes.kyc)
                 ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -140,9 +141,9 @@ export default function AdminHeader() {
 
           {/* Penalty */}
           <Link
-            href="/admin/penalty"
+            href={FrontendRoutes.penalty}
             className={`pb-1 transition ${
-              pathname.startsWith("/admin/penalty")
+              pathname.startsWith(FrontendRoutes.penalty)
                 ? "text-teal-600 font-semibold border-b-2 border-teal-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -155,7 +156,7 @@ export default function AdminHeader() {
         <div className="flex items-center space-x-3">
           {/* Notification */}
           <Link
-            href="/admin/notifications"
+            href={FrontendRoutes.notifications}
             className="relative p-2 text-gray-600 hover:text-gray-900"
           >
             <Bell className="w-6 h-6" />
@@ -202,10 +203,10 @@ export default function AdminHeader() {
       {isOpen && (
         <div className="md:hidden mt-3 bg-gray-50 border-t border-gray-200 rounded-lg shadow-sm p-4 space-y-3 animate-fadeIn">
           <Link
-            href="/admin/dashboard"
+            href={FrontendRoutes.dashboard}
             onClick={() => setIsOpen(false)}
             className={`block text-sm px-2 py-1 rounded transition ${
-              pathname.startsWith("/admin/dashboard")
+              pathname.startsWith(FrontendRoutes.dashboard)
                 ? "text-teal-600 font-semibold bg-teal-50"
                 : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             }`}
@@ -214,10 +215,10 @@ export default function AdminHeader() {
           </Link>
 
           <Link
-            href="/admin/users"
+            href={FrontendRoutes.users}
             onClick={() => setIsOpen(false)}
             className={`block text-sm px-2 py-1 rounded transition ${
-              pathname.startsWith("/admin/users")
+              pathname.startsWith(FrontendRoutes.users)
                 ? "text-teal-600 font-semibold bg-teal-50"
                 : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             }`}
@@ -231,14 +232,14 @@ export default function AdminHeader() {
               Loans
             </p>
             <Link
-              href="/admin/loans"
+              href={FrontendRoutes.loans}
               onClick={() => setIsOpen(false)}
               className="block text-sm px-2 py-1 rounded text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             >
               Loan Applications
             </Link>
             <Link
-              href="/admin/loan-products"
+              href={FrontendRoutes.loanProducts}
               onClick={() => setIsOpen(false)}
               className="block text-sm px-2 py-1 rounded text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             >
@@ -247,10 +248,10 @@ export default function AdminHeader() {
           </div>
 
           <Link
-            href="/admin/investments"
+            href={FrontendRoutes.investments}
             onClick={() => setIsOpen(false)}
             className={`block text-sm px-2 py-1 rounded transition ${
-              pathname.startsWith("/admin/investments")
+              pathname.startsWith(FrontendRoutes.investments)
                 ? "text-teal-600 font-semibold bg-teal-50"
                 : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             }`}
@@ -259,10 +260,10 @@ export default function AdminHeader() {
           </Link>
 
           <Link
-            href="/admin/kyc"
+            href={FrontendRoutes.kyc}
             onClick={() => setIsOpen(false)}
             className={`block text-sm px-2 py-1 rounded transition ${
-              pathname.startsWith("/admin/kyc")
+              pathname.startsWith(FrontendRoutes.kyc)
                 ? "text-teal-600 font-semibold bg-teal-50"
                 : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             }`}
@@ -271,10 +272,10 @@ export default function AdminHeader() {
           </Link>
 
           <Link
-            href="/admin/penalty"
+            href={FrontendRoutes.penalty}
             onClick={() => setIsOpen(false)}
             className={`block text-sm px-2 py-1 rounded transition ${
-              pathname.startsWith("/admin/penalty")
+              pathname.startsWith(FrontendRoutes.penalty)
                 ? "text-teal-600 font-semibold bg-teal-50"
                 : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
             }`}
