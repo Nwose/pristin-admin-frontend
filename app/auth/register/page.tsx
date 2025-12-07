@@ -215,7 +215,7 @@ export default function SignUp() {
       const errorData = error?.response?.data || error?.data || error;
 
       // Check if error has field-specific validation errors
-      if (errorData && typeof errorData === 'object') {
+      if (errorData && typeof errorData === "object") {
         const newFieldErrors: typeof fieldErrors = {};
         let hasFieldErrors = false;
 
@@ -256,16 +256,14 @@ export default function SignUp() {
           setApiErrors([]); // Clear general errors when we have field errors
         } else {
           // If no field-specific errors, show general error
-          const errorMessages =
-            interpretServerError(errorData) || [
-              "Registration failed. Please try again.",
-            ];
+          const errorMessages = interpretServerError(errorData) || [
+            "Registration failed. Please try again.",
+          ];
           setApiErrors(errorMessages);
         }
       } else {
         // Generic error handling
-        const errorMessages =
-          interpretServerError(error?.response?.data) ||
+        const errorMessages = interpretServerError(error?.response?.data) ||
           interpretServerError(error) || [
             "Registration failed. Please try again.",
           ];
@@ -285,8 +283,9 @@ export default function SignUp() {
   }) => (
     <div className="flex items-center space-x-2 text-xs sm:text-sm">
       <div
-        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center transition-all duration-200 ${isValid ? "bg-green-500" : "bg-red-500"
-          }`}
+        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+          isValid ? "bg-green-500" : "bg-red-500"
+        }`}
       >
         {isValid ? (
           <svg
@@ -315,8 +314,9 @@ export default function SignUp() {
         )}
       </div>
       <span
-        className={`${isValid ? "text-green-600" : "text-red-500"
-          } text-xs sm:text-sm transition-colors duration-200`}
+        className={`${
+          isValid ? "text-green-600" : "text-red-500"
+        } text-xs sm:text-sm transition-colors duration-200`}
       >
         {text}
       </span>
@@ -329,410 +329,313 @@ export default function SignUp() {
     isFilled: boolean
   ) => {
     if (!touchedFields[fieldName]) return "border-gray-200 focus:ring-teal-500";
-    if (isFilled && isValid)
-      return "border-green-500 focus:ring-green-500";
+    if (isFilled && isValid) return "border-green-500 focus:ring-green-500";
     if (isFilled && !isValid) return "border-red-500 focus:ring-red-500";
     return "border-gray-200 focus:ring-teal-500";
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Left side - Hero section */}
-      <div className="hidden lg:flex lg:w-1/3 relative overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/loginImage.png')" }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.3) 10%, #012638 100%)",
-            }}
-          ></div>
-        </div>
-        <div className="relative z-20 flex flex-col justify-between pt-[12px] text-white w-full">
-          <div className="flex items-center justify-center">
-            <Image
-              src="/images/logo_1.png"
-              alt="Pristin Capital Logo"
-              width={200}
-              height={60}
-              className="max-w-xs"
-              priority
-            />
-          </div>
-          <div className="flex-2 flex items-start justify-start pl-[27px] pt-8">
-            <Image
-              src="/images/loginFrame.png"
-              alt="Access. Loans. Grow Wealth. All in One App."
-              width={184}
-              height={278}
-              className="max-w-sm"
-              priority
-            />
-          </div>
-        </div>
-      </div>
+    <>
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-8">
+        <div className="w-full max-w-lg">
+          <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-12 border border-gray-100">
+            <div className="flex justify-center mb-8">
+              <Image
+                src="/images/logo_2.jpg"
+                alt="Pristin Capital Logo"
+                width={188}
+                height={58}
+                className="rounded-sm"
+              />
+            </div>
 
-      {/* Right side - Form */}
-      <div className="w-full lg:w-2/3 flex flex-col bg-gray-50">
-        {/* Header */}
-        <div className="flex justify-between lg:justify-end items-center p-4 lg:p-6 space-x-4 lg:space-x-8 bg-white shadow-sm">
-          <div className="lg:hidden flex items-center">
-            <Image
-              src="/images/logo_1.png"
-              alt="Pristin Capital Logo"
-              width={100}
-              height={30}
-              className="max-w-xs"
-              priority
-            />
-          </div>
-          <div className="flex space-x-4 lg:space-x-8">
-            <button className="text-gray-600 hover:text-teal-600 font-medium text-sm lg:text-base transition-colors">
-              About
-            </button>
-            <button className="text-gray-600 hover:text-teal-600 font-medium text-sm lg:text-base transition-colors">
-              Help
-            </button>
-          </div>
-        </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-3">
+              Welcome
+            </h2>
+            <p className="text-center text-gray-600 mb-8 lg:mb-10 text-sm sm:text-base">
+              <Link
+                href={FrontendRoutes.login}
+                className="text-teal-600 cursor-pointer hover:underline font-medium transition-colors"
+              >
+                Sign In
+              </Link>
+              <span className="mx-2">or</span>
+              <span className="text-teal-600 font-medium">
+                Create an account
+              </span>
+            </p>
 
-        {/* Main content */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-8">
-          <div className="w-full max-w-lg">
-            <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-12 border border-gray-100">
-              <div className="flex justify-center mb-8">
-                <Image
-                  src="/images/logo_2.jpg"
-                  alt="Pristin Capital Logo"
-                  width={188}
-                  height={58}
-                  className="rounded-sm"
-                />
+            <form className="space-y-6 lg:space-y-8" onSubmit={handleSubmit}>
+              {/* Name fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-base font-medium text-gray-700 mb-3">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value);
+                      if (touchedFields.firstName) validateField("firstName");
+                    }}
+                    onBlur={() => handleBlur("firstName")}
+                    placeholder="John"
+                    className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
+                      "firstName",
+                      isFirstNameValid,
+                      firstName.length > 0
+                    )}`}
+                  />
+                  {touchedFields.firstName && fieldErrors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {fieldErrors.firstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-base font-medium text-gray-700 mb-3">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => {
+                      setLastName(e.target.value);
+                      if (touchedFields.lastName) validateField("lastName");
+                    }}
+                    onBlur={() => handleBlur("lastName")}
+                    placeholder="Doe"
+                    className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
+                      "lastName",
+                      isLastNameValid,
+                      lastName.length > 0
+                    )}`}
+                  />
+                  {touchedFields.lastName && fieldErrors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {fieldErrors.lastName}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-3">
-                Welcome
-              </h2>
-              <p className="text-center text-gray-600 mb-8 lg:mb-10 text-sm sm:text-base">
-                <Link
-                  href={FrontendRoutes.login}
-                  className="text-teal-600 cursor-pointer hover:underline font-medium transition-colors"
-                >
-                  Sign In
-                </Link>
-                <span className="mx-2">or</span>
-                <span className="text-teal-600 font-medium">
-                  Create an account
-                </span>
-              </p>
+              {/* Phone number */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-3">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  international
+                  defaultCountry="NG"
+                  value={phoneNumber}
+                  onChange={(value) => {
+                    setPhoneNumber(value || "");
+                    if (touchedFields.phoneNumber) validateField("phoneNumber");
+                  }}
+                  onBlur={() => handleBlur("phoneNumber")}
+                  placeholder="+234 812 345 6789"
+                  className={`phone-input-wrapper w-full ${getInputBorderClass(
+                    "phoneNumber",
+                    isPhoneValid,
+                    phoneNumber.length > 0
+                  )}`}
+                />
+                {touchedFields.phoneNumber && fieldErrors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.phoneNumber}
+                  </p>
+                )}
+              </div>
 
-              <form className="space-y-6 lg:space-y-8" onSubmit={handleSubmit}>
-                {/* Name fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-3">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => {
-                        setFirstName(e.target.value);
-                        if (touchedFields.firstName) validateField("firstName");
-                      }}
-                      onBlur={() => handleBlur("firstName")}
-                      placeholder="John"
-                      className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
-                        "firstName",
-                        isFirstNameValid,
-                        firstName.length > 0
-                      )}`}
-                    />
-                    {touchedFields.firstName && fieldErrors.firstName && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {fieldErrors.firstName}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-3">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => {
-                        setLastName(e.target.value);
-                        if (touchedFields.lastName) validateField("lastName");
-                      }}
-                      onBlur={() => handleBlur("lastName")}
-                      placeholder="Doe"
-                      className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
-                        "lastName",
-                        isLastNameValid,
-                        lastName.length > 0
-                      )}`}
-                    />
-                    {touchedFields.lastName && fieldErrors.lastName && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {fieldErrors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
+              {/* Email */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-3">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (touchedFields.email) validateField("email");
+                  }}
+                  onBlur={() => handleBlur("email")}
+                  placeholder="user@example.com"
+                  className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
+                    "email",
+                    isEmailValid,
+                    isEmailFilled
+                  )}`}
+                />
+                {touchedFields.email && fieldErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.email}
+                  </p>
+                )}
+              </div>
 
-                {/* Phone number */}
-                <div>
-                  <label className="block text-base font-medium text-gray-700 mb-3">
-                    Phone Number
-                  </label>
-                  <PhoneInput
-                    international
-                    defaultCountry="NG"
-                    value={phoneNumber}
-                    onChange={(value) => {
-                      setPhoneNumber(value || "");
-                      if (touchedFields.phoneNumber)
-                        validateField("phoneNumber");
-                    }}
-                    onBlur={() => handleBlur("phoneNumber")}
-                    placeholder="+234 812 345 6789"
-                    className={`phone-input-wrapper w-full ${getInputBorderClass(
-                      "phoneNumber",
-                      isPhoneValid,
-                      phoneNumber.length > 0
-                    )}`}
-                  />
-                  {touchedFields.phoneNumber && fieldErrors.phoneNumber && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {fieldErrors.phoneNumber}
-                    </p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-base font-medium text-gray-700 mb-3">
-                    Email
-                  </label>
+              {/* Password */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-3">
+                  Password
+                </label>
+                <div className="relative">
                   <input
-                    type="email"
-                    value={email}
+                    type={showPassword ? "text" : "password"}
+                    value={password}
                     onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (touchedFields.email) validateField("email");
+                      setPassword(e.target.value);
+                      if (touchedFields.password) validateField("password");
                     }}
-                    onBlur={() => handleBlur("email")}
-                    placeholder="user@example.com"
+                    onBlur={() => handleBlur("password")}
+                    placeholder="Enter your password"
                     className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
-                      "email",
-                      isEmailValid,
-                      isEmailFilled
+                      "password",
+                      isPasswordValid,
+                      password.length > 0
                     )}`}
                   />
-                  {touchedFields.email && fieldErrors.email && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {fieldErrors.email}
-                    </p>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
                 </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-base font-medium text-gray-700 mb-3">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (touchedFields.password) validateField("password");
-                      }}
-                      onBlur={() => handleBlur("password")}
-                      placeholder="Enter your password"
-                      className={`w-full px-6 py-4 border rounded-lg bg-gray-50 focus:ring-2 focus:border-transparent outline-none transition-all duration-200 ${getInputBorderClass(
-                        "password",
-                        isPasswordValid,
-                        password.length > 0
-                      )}`}
+                {password && (
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <ValidationItem
+                      isValid={hasUpperAndLower}
+                      text="Capital + lowercase"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? "🙈" : "👁️"}
-                    </button>
-                  </div>
-                  {password && (
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <ValidationItem
-                        isValid={hasUpperAndLower}
-                        text="Capital + lowercase"
-                      />
-                      <ValidationItem isValid={hasNumber} text="Number" />
-                      <ValidationItem
-                        isValid={hasSpecialChar}
-                        text="Special character"
-                      />
-                      <ValidationItem
-                        isValid={hasMinLength}
-                        text="Min 8 characters"
-                      />
-                    </div>
-                  )}
-                  {touchedFields.password && fieldErrors.password && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {fieldErrors.password}
-                    </p>
-                  )}
-                </div>
-
-                {/* Terms and conditions */}
-                <div className="relative flex items-start space-x-4">
-                  <input
-                    type="checkbox"
-                    checked={isTermsChecked}
-                    onChange={(e) => setIsTermsChecked(e.target.checked)}
-                    className="mt-1.5 w-5 h-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer"
-                  />
-                  <label className="text-base text-gray-600 leading-relaxed">
-                    I agree to the{" "}
-                    <span className="text-teal-600 cursor-pointer hover:underline font-medium transition-colors">
-                      Terms and Conditions
-                    </span>
-                  </label>
-                  {showTermsTooltip && (
-                    <div className="absolute -top-12 left-0 bg-gray-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg animate-fade-in">
-                      To proceed, please accept Terms & Conditions
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={!isFormValid || loading}
-                  className={`w-full py-4 rounded-sm font-semibold text-lg shadow-lg transition-all duration-200 ${isFormValid && !loading
-                      ? "bg-slate-800 hover:bg-slate-900 text-white hover:shadow-xl"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Creating Account...
-                    </span>
-                  ) : (
-                    "Create Account"
-                  )}
-                </button>
-
-                {/* Error messages */}
-                {apiErrors.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    {apiErrors.map((error, index) => (
-                      <p key={index} className="text-red-600 text-sm">
-                        {error}
-                      </p>
-                    ))}
+                    <ValidationItem isValid={hasNumber} text="Number" />
+                    <ValidationItem
+                      isValid={hasSpecialChar}
+                      text="Special character"
+                    />
+                    <ValidationItem
+                      isValid={hasMinLength}
+                      text="Min 8 characters"
+                    />
                   </div>
                 )}
+                {touchedFields.password && fieldErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.password}
+                  </p>
+                )}
+              </div>
 
-                {/* Divider */}
-                <div className="text-center text-gray-400 font-medium">or</div>
-
-                {/* Login link */}
-                <p className="text-center text-gray-600 text-base">
-                  Already have an account?{" "}
-                  <Link
-                    href={FrontendRoutes.login}
-                    className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"
-                  >
-                    Log in
-                  </Link>
-                </p>
-                <p className="text-center text-gray-400 text-sm mt-4">
-                  <Link href={FrontendRoutes.verifyEmailOTP} className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"> Verify Email </Link> | 
-                  <Link href={FrontendRoutes.verifyPhoneOTP} className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"> Verify Phone </Link>
-                </p>
-              </form>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Footer */}
-        <div className="bg-white text-teal-600 py-4 sm:py-6 text-center shadow-xl">
-          <p className="text-xs sm:text-sm mb-3 sm:mb-4 px-4">
-            © 2025 Pristin. All rights reserved.
-          </p>
-          <div className="flex justify-center space-x-3 sm:space-x-4">
-            {/* Instagram */}
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-              <svg
-                className="w-[16px] h-[16px] text-teal-600"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-              </svg>
-            </div>
-            {/* Help */}
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-              <svg
-                className="w-[16px] h-[16px] text-teal-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              {/* Terms and conditions */}
+              <div className="relative flex items-start space-x-4">
+                <input
+                  type="checkbox"
+                  checked={isTermsChecked}
+                  onChange={(e) => setIsTermsChecked(e.target.checked)}
+                  className="mt-1.5 w-5 h-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer"
                 />
-              </svg>
-            </div>
-            {/* LinkedIn */}
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-              <svg
-                className="w-[16px] h-[16px] text-teal-600"
-                fill="currentColor"
-                viewBox="0 0 24 24"
+                <label className="text-base text-gray-600 leading-relaxed">
+                  I agree to the{" "}
+                  <span className="text-teal-600 cursor-pointer hover:underline font-medium transition-colors">
+                    Terms and Conditions
+                  </span>
+                </label>
+                {showTermsTooltip && (
+                  <div className="absolute -top-12 left-0 bg-gray-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg animate-fade-in">
+                    To proceed, please accept Terms & Conditions
+                  </div>
+                )}
+              </div>
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={!isFormValid || loading}
+                className={`w-full py-4 rounded-sm font-semibold text-lg shadow-lg transition-all duration-200 ${
+                  isFormValid && !loading
+                    ? "bg-slate-800 hover:bg-slate-900 text-white hover:shadow-xl"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
               >
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-            </div>
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Creating Account...
+                  </span>
+                ) : (
+                  "Create Account"
+                )}
+              </button>
+
+              {/* Error messages */}
+              {apiErrors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  {apiErrors.map((error, index) => (
+                    <p key={index} className="text-red-600 text-sm">
+                      {error}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="text-center text-gray-400 font-medium">or</div>
+
+              {/* Login link */}
+              <p className="text-center text-gray-600 text-base">
+                Already have an account?{" "}
+                <Link
+                  href={FrontendRoutes.login}
+                  className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"
+                >
+                  Log in
+                </Link>
+              </p>
+              <p className="text-center text-gray-400 text-sm mt-4">
+                <Link
+                  href={FrontendRoutes.verifyEmailOTP}
+                  className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"
+                >
+                  {" "}
+                  Verify Email{" "}
+                </Link>{" "}
+                |
+                <Link
+                  href={FrontendRoutes.verifyPhoneOTP}
+                  className="text-teal-600 cursor-pointer hover:underline font-semibold transition-colors"
+                >
+                  {" "}
+                  Verify Phone{" "}
+                </Link>
+              </p>
+            </form>
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }

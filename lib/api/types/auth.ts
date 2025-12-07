@@ -20,6 +20,7 @@ export interface UserType {
   paystack_dva_bank_name: string;
   paystack_dva_bank_slug: string;
   avatar?: string;
+  is_staff: boolean;
 }
 
 export interface LoginCredentialsType {

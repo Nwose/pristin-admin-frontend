@@ -32,8 +32,6 @@ import {
   RegisterDataType,
 } from "../types/auth";
 
-
-
 export interface ApiErrorType {
   message: string;
   status: number;
@@ -62,7 +60,6 @@ export function isApiErrorType(error: unknown): error is ApiErrorType {
     (!("details" in error) || true) // details can be anything
   );
 }
-
 
 // Auth Store State
 interface AuthState {
@@ -183,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
    */
   const initializeAuth = async () => {
     setLoading(true);
-    
+
     try {
       if (authUtils.isAuthenticated()) {
         await fetchCurrentUser();
@@ -198,9 +195,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       alert(error);
       // handleLogout();
       // if ({ message: "Request timeout", status: 408, code: "REQUEST_TIMEOUT", details: undefined })
-      if(isErrorWithCodeType(error)){
-        if (error?.code == "REQUEST_TIMEOUT"){
-        //  alert("Please check your internet");
+      if (isErrorWithCodeType(error)) {
+        if (error?.code == "REQUEST_TIMEOUT") {
+          //  alert("Please check your internet");
         }
       }
     } finally {
@@ -214,13 +211,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const fetchCurrentUser = async (): Promise<void> => {
     try {
       const response = await api.get<UserType>(BackendRoutes.me);
-      setUser(response.data);
       updatePartialUser({
         email: response.data.email,
         phone: response.data.phone_number,
         is_email_verified: response.data.is_email_verified,
         is_phone_verified: response.data.is_phone_number_verified,
       });
+      if (!response.data.is_staff) {
+        // log the user out
+        authUtils.logout();
+        setUser(null);
+        throw new Error("Unauthorized Access - Staff Only");
+      }
+      setUser(response.data);
       setError(null);
     } catch (error) {
       console.error("[Auth] Failed to fetch user:", error);
