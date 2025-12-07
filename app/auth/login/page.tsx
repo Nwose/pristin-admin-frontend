@@ -160,9 +160,9 @@ export default function Login() {
   return (
     <>
       {/* the actuall auth view */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-8">
+      <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-lg">
-          <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-12 border border-gray-100">
+          <div className="bg-white rounded-lg ">
             <div className="flex justify-center mb-8">
               <Image
                 src="/images/logo_2.jpg"
@@ -174,7 +174,7 @@ export default function Login() {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-3">
-              Welcome Back
+              Admin Login
             </h2>
 
             <p className="text-center text-teal-600 mb-8 lg:mb-10 text-sm sm:text-base">

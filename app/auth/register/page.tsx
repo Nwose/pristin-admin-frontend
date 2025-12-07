@@ -336,9 +336,9 @@ export default function SignUp() {
 
   return (
     <>
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-8">
+      <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-lg">
-          <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-12 border border-gray-100">
+          <div className="bg-white ">
             <div className="flex justify-center mb-8">
               <Image
                 src="/images/logo_2.jpg"
@@ -363,6 +363,10 @@ export default function SignUp() {
               <span className="text-teal-600 font-medium">
                 Create an account
               </span>
+            </p>
+            <p className="text-slate-700 text-sm py-4">
+              An admin would have to upgrade your account to admin before you
+              can login.
             </p>
 
             <form className="space-y-6 lg:space-y-8" onSubmit={handleSubmit}>

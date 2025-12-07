@@ -111,9 +111,9 @@ export default function SecondFactorOTPPage() {
 
   return (
     <>
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-8">
+      <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-lg">
-          <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-12 border border-gray-100">
+          <div className="bg-white">
             {/* Use the OtpVerifier component */}
             <OtpVerifier
               length={6}
