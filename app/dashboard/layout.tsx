@@ -1,4 +1,5 @@
 import AdminHeader from "@/components/admin/AdminHeader";
+import { authUtils } from "@/lib/api/auth/TokenManager";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

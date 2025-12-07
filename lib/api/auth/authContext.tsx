@@ -192,12 +192,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       }
     } catch (error) {
       console.error("[Auth] Initialization failed:", error);
-      alert(error);
+      // alert(JSON.stringify(error));
       // handleLogout();
       // if ({ message: "Request timeout", status: 408, code: "REQUEST_TIMEOUT", details: undefined })
       if (isErrorWithCodeType(error)) {
-        if (error?.code == "REQUEST_TIMEOUT") {
-          //  alert("Please check your internet");
+        if (
+          error?.code == "REQUEST_TIMEOUT" ||
+          error?.code == "NETWORK_ERROR"
+        ) {
+          alert(error.message);
         }
       }
     } finally {
