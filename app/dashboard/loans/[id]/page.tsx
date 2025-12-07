@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/api/auth/authContext";
 import { getLoanApplicationById } from "@/services/loan_application.service";
 import { Loader2, X } from "lucide-react";
-import AdminHeader from "@/components/admin/AdminHeader";
 import { makeRequest } from "@/services/base";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default function LoanDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [loan, setLoan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,182 +150,176 @@ export default function LoanDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+    <>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#CCEAE9]">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold text-[#001B2E]">
+            Loan Details
+          </h2>
+          <button
+            onClick={() => router.back()}
+            className="text-[#019893] hover:text-[#017e79] text-sm font-medium"
+          >
+            ← Back
+          </button>
+        </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#CCEAE9]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-[#001B2E]">
-              Loan Details
-            </h2>
-            <button
-              onClick={() => router.back()}
-              className="text-[#019893] hover:text-[#017e79] text-sm font-medium"
+        {/* User Info */}
+        <div className="space-y-4 mb-6">
+          <h3 className="font-medium text-gray-700 mb-1">User Information</h3>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <p className="text-gray-700">
+              <strong>Name:</strong>{" "}
+              {loan.user
+                ? `${loan.user.first_name || ""} ${loan.user.last_name || ""}`
+                : "N/A"}
+            </p>
+            <p className="text-gray-700">
+              <strong>Email:</strong> {loan.user?.email || "N/A"}
+            </p>
+          </div>
+        </div>
+
+        {/* Loan Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-700">
+          <div>
+            <p className="text-gray-500 text-sm">Loan Product</p>
+            <p className="font-semibold">{loan.product?.name || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Amount Requested</p>
+            <p className="font-semibold">
+              ₦{principal.toLocaleString("en-NG")}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Tenure (months)</p>
+            <p className="font-semibold">
+              {loan.tenure_months || loan.tenure || "N/A"}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Interest Rate</p>
+            <p className="font-semibold">
+              {interestRate ? `${(interestRate * 100).toFixed(2)}%` : "N/A"}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Status</p>
+            <span
+              className={`px-2 rounded-full text-sm font-medium ${getStatusColor(
+                loan.status
+              )}`}
             >
-              ← Back
-            </button>
+              {loan.status || "Unknown"}
+            </span>
           </div>
-
-          {/* User Info */}
-          <div className="space-y-4 mb-6">
-            <h3 className="font-medium text-gray-700 mb-1">User Information</h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <p className="text-gray-700">
-                <strong>Name:</strong>{" "}
-                {loan.user
-                  ? `${loan.user.first_name || ""} ${loan.user.last_name || ""}`
-                  : "N/A"}
-              </p>
-              <p className="text-gray-700">
-                <strong>Email:</strong> {loan.user?.email || "N/A"}
-              </p>
-            </div>
+          <div>
+            <p className="text-gray-500 text-sm">Date Applied</p>
+            <p className="font-semibold">
+              {loan.created_at
+                ? new Date(loan.created_at).toLocaleDateString()
+                : "N/A"}
+            </p>
           </div>
+        </div>
 
-          {/* Loan Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-700">
-            <div>
-              <p className="text-gray-500 text-sm">Loan Product</p>
-              <p className="font-semibold">{loan.product?.name || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Amount Requested</p>
-              <p className="font-semibold">
+        {/* Purpose */}
+        {loan.purpose && (
+          <div className="mt-6">
+            <p className="text-gray-500 text-sm mb-1">Purpose</p>
+            <p className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-gray-700">
+              {loan.purpose}
+            </p>
+          </div>
+        )}
+
+        {/* 💰 Repayment Breakdown */}
+        <div className="mt-8 bg-[#F9FAFB] p-5 rounded-xl border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Repayment Breakdown
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Principal</p>
+              <p className="text-lg font-semibold text-gray-800">
                 ₦{principal.toLocaleString("en-NG")}
               </p>
             </div>
-            <div>
-              <p className="text-gray-500 text-sm">Tenure (months)</p>
-              <p className="font-semibold">
-                {loan.tenure_months || loan.tenure || "N/A"}
+            <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Interest</p>
+              <p className="text-lg font-semibold text-gray-800">
+                ₦{interest.toLocaleString("en-NG")}
               </p>
             </div>
-            <div>
-              <p className="text-gray-500 text-sm">Interest Rate</p>
-              <p className="font-semibold">
-                {interestRate ? `${(interestRate * 100).toFixed(2)}%` : "N/A"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Status</p>
-              <span
-                className={`px-2 rounded-full text-sm font-medium ${getStatusColor(
-                  loan.status
-                )}`}
-              >
-                {loan.status || "Unknown"}
-              </span>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Date Applied</p>
-              <p className="font-semibold">
-                {loan.created_at
-                  ? new Date(loan.created_at).toLocaleDateString()
-                  : "N/A"}
+            <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Total Repayment</p>
+              <p className="text-lg font-semibold text-[#019893]">
+                ₦{(total || 0).toLocaleString("en-NG")}
               </p>
             </div>
           </div>
 
-          {/* Purpose */}
-          {loan.purpose && (
+          {/* 📜 Penalty List */}
+          {loan.penalties?.length > 0 && (
             <div className="mt-6">
-              <p className="text-gray-500 text-sm mb-1">Purpose</p>
-              <p className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-gray-700">
-                {loan.purpose}
-              </p>
+              <h4 className="text-md font-semibold text-gray-800 mb-2">
+                Penalties
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-gray-200 text-sm text-gray-700 bg-white rounded-lg">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Amount</th>
+                      <th className="px-4 py-2 text-left">Reason</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loan.penalties.map((p: any, i: number) => (
+                      <tr
+                        key={i}
+                        className="border-b last:border-0 hover:bg-gray-50"
+                      >
+                        <td className="px-4 py-2">₦{p.amount}</td>
+                        <td className="px-4 py-2">{p.reason}</td>
+                        <td className="px-4 py-2">
+                          {new Date(p.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
+        </div>
 
-          {/* 💰 Repayment Breakdown */}
-          <div className="mt-8 bg-[#F9FAFB] p-5 rounded-xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Repayment Breakdown
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <p className="text-gray-500 text-sm mb-1">Principal</p>
-                <p className="text-lg font-semibold text-gray-800">
-                  ₦{principal.toLocaleString("en-NG")}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <p className="text-gray-500 text-sm mb-1">Interest</p>
-                <p className="text-lg font-semibold text-gray-800">
-                  ₦{interest.toLocaleString("en-NG")}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <p className="text-gray-500 text-sm mb-1">Total Repayment</p>
-                <p className="text-lg font-semibold text-[#019893]">
-                  ₦{(total || 0).toLocaleString("en-NG")}
-                </p>
-              </div>
-            </div>
-
-            {/* 📜 Penalty List */}
-            {loan.penalties?.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-2">
-                  Penalties
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border border-gray-200 text-sm text-gray-700 bg-white rounded-lg">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Amount</th>
-                        <th className="px-4 py-2 text-left">Reason</th>
-                        <th className="px-4 py-2 text-left">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loan.penalties.map((p: any, i: number) => (
-                        <tr
-                          key={i}
-                          className="border-b last:border-0 hover:bg-gray-50"
-                        >
-                          <td className="px-4 py-2">₦{p.amount}</td>
-                          <td className="px-4 py-2">{p.reason}</td>
-                          <td className="px-4 py-2">
-                            {new Date(p.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 mt-8">
-            <button
-              onClick={handleApprove}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Approve
-            </button>
-            <button
-              onClick={handleReject}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Reject
-            </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              Disburse
-            </button>
-            <button
-              onClick={() => setShowPenaltyModal(true)}
-              className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Add Penalty
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 mt-8">
+          <button
+            onClick={handleApprove}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Approve
+          </button>
+          <button
+            onClick={handleReject}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Reject
+          </button>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            Disburse
+          </button>
+          <button
+            onClick={() => setShowPenaltyModal(true)}
+            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Add Penalty
+          </button>
         </div>
       </div>
-
       {showPenaltyModal && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
@@ -377,6 +372,6 @@ export default function LoanDetailsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -3,9 +3,9 @@
  * Handles JWT token lifecycle with proper state management
  */
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { BackendRoutes } from '../BackendRoutes';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { BackendRoutes } from "../BackendRoutes";
 // Types
 export interface TokenResponse {
   access: string;
@@ -34,14 +34,14 @@ interface TokenState {
   refreshExpiry: number | null;
   isRefreshing: boolean;
   failedRefreshAttempts: number;
-  
+
   // Actions
   setTokens: (tokenResponse: TokenResponse) => void;
   clearTokens: () => void;
   setRefreshing: (isRefreshing: boolean) => void;
   incrementFailedAttempts: () => void;
   resetFailedAttempts: () => void;
-  
+
   // Getters (computed values)
   isAccessTokenValid: () => boolean;
   isRefreshTokenValid: () => boolean;
@@ -55,6 +55,19 @@ const TOKEN_CONFIG = {
   MAX_REFRESH_RETRIES: 3,
   RETRY_DELAY_MS: 1000,
 } as const;
+
+const baseURL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1";
+
+function buildURL(endpoint: string): string {
+  // Remove leading slash from endpoint if present
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
+
+  // Remove trailing slash from baseURL if present
+  const cleanBaseURL = baseURL.endsWith("/") ? baseURL.slice(0, -1) : baseURL;
+
+  return `${cleanBaseURL}/${cleanEndpoint}`;
+}
 
 // Create Zustand store with persistence
 export const useTokenStore = create<TokenState>()(
@@ -72,12 +85,12 @@ export const useTokenStore = create<TokenState>()(
       setTokens: (tokenResponse: TokenResponse) => {
         const accessExpiry = parseInt(tokenResponse.access_expiry, 10);
         const refreshExpiry = parseInt(tokenResponse.refresh_expiry, 10);
-        
+
         // Validate expiry times
         const now = Math.floor(Date.now() / 1000);
         if (accessExpiry <= now || refreshExpiry <= now) {
-          console.error('[TokenStore] Received expired tokens');
-          throw new Error('Received expired tokens');
+          console.error("[TokenStore] Received expired tokens");
+          throw new Error("Received expired tokens");
         }
 
         set({
@@ -88,8 +101,8 @@ export const useTokenStore = create<TokenState>()(
           failedRefreshAttempts: 0,
         });
 
-        console.log('[TokenStore] Tokens set successfully');
-        
+        console.log("[TokenStore] Tokens set successfully");
+
         // Schedule automatic refresh
         tokenManager.scheduleTokenRefresh();
       },
@@ -103,11 +116,11 @@ export const useTokenStore = create<TokenState>()(
           isRefreshing: false,
           failedRefreshAttempts: 0,
         });
-        
+
         // Clear scheduled refresh
         tokenManager.clearRefreshTimer();
-        
-        console.log('[TokenStore] Tokens cleared');
+
+        console.log("[TokenStore] Tokens cleared");
       },
 
       setRefreshing: (isRefreshing: boolean) => {
@@ -115,8 +128,8 @@ export const useTokenStore = create<TokenState>()(
       },
 
       incrementFailedAttempts: () => {
-        set((state) => ({ 
-          failedRefreshAttempts: state.failedRefreshAttempts + 1 
+        set((state) => ({
+          failedRefreshAttempts: state.failedRefreshAttempts + 1,
         }));
       },
 
@@ -128,7 +141,7 @@ export const useTokenStore = create<TokenState>()(
       isAccessTokenValid: () => {
         const { access, accessExpiry } = get();
         if (!access || !accessExpiry) return false;
-        
+
         const now = Math.floor(Date.now() / 1000);
         return accessExpiry > now;
       },
@@ -136,7 +149,7 @@ export const useTokenStore = create<TokenState>()(
       isRefreshTokenValid: () => {
         const { refresh, refreshExpiry } = get();
         if (!refresh || !refreshExpiry) return false;
-        
+
         const now = Math.floor(Date.now() / 1000);
         return refreshExpiry > now;
       },
@@ -147,20 +160,20 @@ export const useTokenStore = create<TokenState>()(
 
         const now = Math.floor(Date.now() / 1000);
         const bufferSeconds = Math.floor(TOKEN_CONFIG.REFRESH_BUFFER_MS / 1000);
-        
+
         return accessExpiry - now <= bufferSeconds;
       },
 
       getTimeUntilExpiry: () => {
         const { accessExpiry } = get();
         if (!accessExpiry) return null;
-        
+
         const now = Math.floor(Date.now() / 1000);
         return Math.max(0, accessExpiry - now);
       },
     }),
     {
-      name: 'auth-token-storage',
+      name: "auth-token-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Only persist these fields
@@ -194,9 +207,9 @@ class TokenManager {
    */
   async getAccessToken(): Promise<string | null> {
     const state = useTokenStore.getState();
-    
+
     if (!state.access) {
-      console.warn('[TokenManager] No access token found');
+      console.warn("[TokenManager] No access token found");
       return null;
     }
 
@@ -219,7 +232,7 @@ class TokenManager {
     }
 
     this.refreshPromise = this.performTokenRefresh();
-    
+
     try {
       const newToken = await this.refreshPromise;
       return newToken;
@@ -232,25 +245,25 @@ class TokenManager {
    * Perform the actual token refresh
    */
   private async performTokenRefresh(): Promise<string> {
-    console.log("PERFORMING TOKEN REFRESH...")
+    console.log("PERFORMING TOKEN REFRESH...");
     const state = useTokenStore.getState();
-    
+
     if (state.isRefreshing) {
-      throw new Error('Token refresh already in progress');
+      throw new Error("Token refresh already in progress");
     }
 
     state.setRefreshing(true);
 
     try {
       if (!state.refresh || !state.isRefreshTokenValid()) {
-        throw new Error('No valid refresh token available');
+        throw new Error("No valid refresh token available");
       }
 
       // Call your refresh endpoint
-      const response = await fetch(BackendRoutes.refreshToken, {
-        method: 'POST',
+      const response = await fetch(buildURL(BackendRoutes.refreshToken), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           refresh: state.refresh,
@@ -261,26 +274,26 @@ class TokenManager {
         throw new Error(`Token refresh failed: ${response.status}`);
       }
 
-      console.log("✅ TOKEN REFERESHED")
+      console.log("✅ TOKEN REFERESHED");
       const data: TokenResponse = await response.json();
-      
+
       // Update tokens in store
       this.setTokens(data);
-      
-      console.log('[TokenManager] Token refreshed successfully');
+
+      console.log("[TokenManager] Token refreshed successfully");
       return data.access;
     } catch (error) {
-      console.error('[TokenManager] Token refresh failed:', error);
-      
+      console.error("[TokenManager] Token refresh failed:", error);
+
       state.incrementFailedAttempts();
-      
+
       // If max retries exceeded or refresh token invalid, trigger logout
       if (
         state.failedRefreshAttempts >= TOKEN_CONFIG.MAX_REFRESH_RETRIES ||
         !state.isRefreshTokenValid()
       ) {
         this.handleTokenExpiration();
-        throw new Error('Authentication session expired');
+        throw new Error("Authentication session expired");
       }
 
       // Retry after delay
@@ -298,27 +311,29 @@ class TokenManager {
     this.clearRefreshTimer();
 
     const state = useTokenStore.getState();
-    
+
     if (!state.accessExpiry) return;
 
     const now = Math.floor(Date.now() / 1000);
     const expiresIn = state.accessExpiry - now;
-    
+
     // Schedule refresh before token expires (with buffer)
     const refreshIn = Math.max(
       0,
-      (expiresIn * 1000) - TOKEN_CONFIG.REFRESH_BUFFER_MS
+      expiresIn * 1000 - TOKEN_CONFIG.REFRESH_BUFFER_MS
     );
 
     this.refreshTimer = setTimeout(() => {
       this.refreshAccessToken().catch((error) => {
-        console.error('[TokenManager] Scheduled refresh failed:', error);
+        console.error("[TokenManager] Scheduled refresh failed:", error);
         this.handleTokenExpiration();
       });
     }, refreshIn);
 
     console.log(
-      `[TokenManager] Token refresh scheduled in ${Math.floor(refreshIn / 1000)}s`
+      `[TokenManager] Token refresh scheduled in ${Math.floor(
+        refreshIn / 1000
+      )}s`
     );
   }
 
@@ -350,9 +365,9 @@ class TokenManager {
    * Handle token expiration
    */
   private handleTokenExpiration(): void {
-    console.warn('[TokenManager] Authentication session expired');
+    console.warn("[TokenManager] Authentication session expired");
     this.clearTokens();
-    
+
     if (this.onTokenExpiredCallback) {
       this.onTokenExpiredCallback();
     }
@@ -363,17 +378,17 @@ class TokenManager {
    */
   decodeToken(token: string): DecodedToken | null {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const jsonPayload = decodeURIComponent(
         atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
       );
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error('[TokenManager] Failed to decode token:', error);
+      console.error("[TokenManager] Failed to decode token:", error);
       return null;
     }
   }

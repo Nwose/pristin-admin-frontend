@@ -1,11 +1,7 @@
-import AdminHeader from "@/components/admin/AdminHeader";
 import NotificationPage from "@/components/admin/notifications/NotificationPage";
+import { useAuth } from "@/lib/api/auth/authContext";
 
 export default function NotificationsPage() {
-  return (
-    <main className="">
-      <AdminHeader />
-      <NotificationPage />
-    </main>
-  );
+  const { user } = useAuth();
+  return <NotificationPage />;
 }

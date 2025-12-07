@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // 🔹 Legacy-style request helper
 export async function send(

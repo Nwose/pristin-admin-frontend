@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
 import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 
@@ -18,7 +15,7 @@ export default function AdminAuthLayout({ children }: AdminAuthLayoutProps) {
         {/* Footer / Signup Link */}
         <div className="text-center mt-6">
           <p className="text-slate-700 text-sm">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href={FrontendRoutes.register}
               className="underline hover:text-slate-800 font-medium"
