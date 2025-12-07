@@ -27,55 +27,6 @@ export default function AdminHeader() {
     { name: "Penalty", href: "/admin/penalty" },
   ];
 
-  // 🔥 Validate admin token + load profile
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
-
-    const validateAdmin = async () => {
-      try {
-        // 🔥 1. Validate token
-        const validateRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/just_testing/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (!validateRes.ok) {
-          localStorage.removeItem("access_token");
-          router.push("/admin/login");
-          return;
-        }
-
-        // 🔥 2. Load admin profile
-        const profileRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/me/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (profileRes.ok) {
-          const data = await profileRes.json();
-
-          setAdminData({
-            name: data?.full_name || "Admin",
-            avatar: data?.avatar || "/images/profile.jpg",
-          });
-        }
-      } catch (error) {
-        console.error("Admin validation error:", error);
-      }
-    };
-
-    validateAdmin();
-  }, [router]);
-
   // 🔥 Logout handler
   const handleLogout = () => {
     localStorage.removeItem("access_token");
