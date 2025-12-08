@@ -27,7 +27,7 @@ export interface Loan {
 export interface LoanApplication {
   id: string;
   user: MinimalUser;
-  product: string; // uuid
+  product: LoanProduct;
   status: ApplicationStatus;
   status_display: string;
   reviewed_by: string | null;

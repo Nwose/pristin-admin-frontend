@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import LoanTable from "@/components/admin/loans/LoanTable";
 import { useAuth } from "@/lib/api/auth/authContext";

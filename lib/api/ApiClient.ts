@@ -3,7 +3,7 @@
  * Handles all HTTP requests with automatic token refresh and error handling
  */
 
-import { tokenManager, authUtils } from './auth/TokenManager';
+import { tokenManager, authUtils } from "./auth/TokenManager";
 
 // Types
 export interface ApiError {
@@ -13,8 +13,9 @@ export interface ApiError {
   details?: unknown;
 }
 
-export interface ApiRequestConfig<P = Record<string, string | number | boolean | undefined>>
-  extends RequestInit {
+export interface ApiRequestConfig<
+  P = Record<string, string | number | boolean | undefined>
+> extends RequestInit {
   requiresAuth?: boolean;
   skipErrorHandler?: boolean;
   params?: P;
@@ -29,12 +30,12 @@ export interface ApiResponse<T = unknown> {
 
 // Configuration
 const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1",
   TIMEOUT: 30000, // 30 seconds
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
+  IS_ADMIN_APP: true,
 } as const;
-
 
 export interface ErrorWithCode {
   message: string;
@@ -57,13 +58,17 @@ export function isErrorWithCodeType(obj: unknown): obj is ErrorWithCode {
   );
 }
 
-
-
 class ApiClient {
   private baseURL: string;
   private onUnauthorized?: () => void;
-  private requestInterceptors: Array<(config: ApiRequestConfig<any>) => ApiRequestConfig<any> | Promise<ApiRequestConfig<any>>> = [];
-  private responseInterceptors: Array<(response: Response) => Response | Promise<Response>> = [];
+  private requestInterceptors: Array<
+    (
+      config: ApiRequestConfig<any>
+    ) => ApiRequestConfig<any> | Promise<ApiRequestConfig<any>>
+  > = [];
+  private responseInterceptors: Array<
+    (response: Response) => Response | Promise<Response>
+  > = [];
 
   constructor(baseURL: string = API_CONFIG.BASE_URL) {
     this.baseURL = baseURL;
@@ -81,7 +86,9 @@ class ApiClient {
    * Add request interceptor
    */
   addRequestInterceptor(
-    interceptor: (config: ApiRequestConfig) => ApiRequestConfig | Promise<ApiRequestConfig>
+    interceptor: (
+      config: ApiRequestConfig
+    ) => ApiRequestConfig | Promise<ApiRequestConfig>
   ): void {
     this.requestInterceptors.push(interceptor);
   }
@@ -102,7 +109,7 @@ class ApiClient {
     endpoint: string,
     config?: ApiRequestConfig<P>
   ): Promise<ApiResponse<T>> {
-    return this.request<T, P>(endpoint, { ...(config as any), method: 'GET' });
+    return this.request<T, P>(endpoint, { ...(config as any), method: "GET" });
   }
 
   /**
@@ -116,7 +123,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     return this.request<T, P>(endpoint, {
       ...(config as any),
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
@@ -131,7 +138,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     return this.request<T, P>(endpoint, {
       ...(config as any),
-      method: 'PUT',
+      method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
@@ -146,7 +153,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     return this.request<T, P>(endpoint, {
       ...(config as any),
-      method: 'PATCH',
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
@@ -160,7 +167,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     return this.request<T, P>(endpoint, {
       ...(config as any),
-      method: 'DELETE'
+      method: "DELETE",
     });
   }
 
@@ -188,7 +195,10 @@ class ApiClient {
 
     try {
       // Build URL
-      const url = this.buildURLWithParams(endpoint, params);
+      const url = this.buildURLWithParams(endpoint, {
+        ...params,
+        as_admin: API_CONFIG.IS_ADMIN_APP ? "yes" : "no",
+      });
 
       // Prepare headers
       const headers = await this.prepareHeaders(config.headers, requiresAuth);
@@ -230,19 +240,24 @@ class ApiClient {
           try {
             const errorBody = await clonedResponse.json();
 
-            if (errorBody?.code === "TOKEN_EXPIRED" || errorBody?.error === "token_expired") {
+            if (
+              errorBody?.code === "TOKEN_EXPIRED" ||
+              errorBody?.error === "token_expired"
+            ) {
               // Prevent infinite retry loops
               if ((config as any)._tokenRefreshAttempted) {
-                console.error('[ApiClient] Token refresh already attempted, failing request');
+                console.error(
+                  "[ApiClient] Token refresh already attempted, failing request"
+                );
                 this.handleUnauthorized();
                 throw this.createError(
-                  'Authentication session expired. Please login again.',
+                  "Authentication session expired. Please login again.",
                   401,
-                  'TOKEN_EXPIRED'
+                  "TOKEN_EXPIRED"
                 );
               }
 
-              console.log('[ApiClient] Token expired, attempting refresh...');
+              console.log("[ApiClient] Token expired, attempting refresh...");
 
               try {
                 await tokenManager.refreshAccessToken();
@@ -254,18 +269,24 @@ class ApiClient {
                   _retryCount: 0, // Reset retry count for token refresh
                 } as any);
               } catch (refreshError) {
-                console.error('[ApiClient] Token refresh failed:', refreshError);
+                console.error(
+                  "[ApiClient] Token refresh failed:",
+                  refreshError
+                );
                 this.handleUnauthorized();
                 throw this.createError(
-                  'Authentication session expired. Please login again.',
+                  "Authentication session expired. Please login again.",
                   401,
-                  'TOKEN_EXPIRED'
+                  "TOKEN_EXPIRED"
                 );
               }
             }
           } catch (parseError) {
             // If we can't parse the error body, continue with normal error handling
-            console.warn('[ApiClient] Could not parse 401 error body:', parseError);
+            console.warn(
+              "[ApiClient] Could not parse 401 error body:",
+              parseError
+            );
           }
         }
 
@@ -274,7 +295,11 @@ class ApiClient {
           if (retryCount < maxRetries) {
             const delay = this.calculateRetryDelay(retryCount);
             console.warn(
-              `[ApiClient] Request failed with status ${response.status}, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`
+              `[ApiClient] Request failed with status ${
+                response.status
+              }, retrying in ${delay}ms (attempt ${
+                retryCount + 1
+              }/${maxRetries})`
             );
 
             await this.sleep(delay);
@@ -284,7 +309,9 @@ class ApiClient {
               _retryCount: retryCount + 1,
             } as any);
           } else {
-            console.error(`[ApiClient] Max retries (${maxRetries}) reached for ${endpoint}`);
+            console.error(
+              `[ApiClient] Max retries (${maxRetries}) reached for ${endpoint}`
+            );
           }
         }
 
@@ -314,12 +341,14 @@ class ApiClient {
       }
 
       // Handle timeout errors
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         // Retry on timeout if retries available
         if (retryCount < maxRetries) {
           const delay = this.calculateRetryDelay(retryCount);
           console.warn(
-            `[ApiClient] Request timeout, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`
+            `[ApiClient] Request timeout, retrying in ${delay}ms (attempt ${
+              retryCount + 1
+            }/${maxRetries})`
           );
 
           await this.sleep(delay);
@@ -331,19 +360,21 @@ class ApiClient {
         }
 
         throw this.createError(
-          'Request timeout - server did not respond in time',
+          "Request timeout - server did not respond in time",
           408,
-          'REQUEST_TIMEOUT'
+          "REQUEST_TIMEOUT"
         );
       }
 
       // Handle network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
         // Retry on network errors if retries available
         if (retryCount < maxRetries) {
           const delay = this.calculateRetryDelay(retryCount);
           console.warn(
-            `[ApiClient] Network error, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`
+            `[ApiClient] Network error, retrying in ${delay}ms (attempt ${
+              retryCount + 1
+            }/${maxRetries})`
           );
 
           await this.sleep(delay);
@@ -355,9 +386,9 @@ class ApiClient {
         }
 
         throw this.createError(
-          'Network error - please check your connection',
+          "Network error - please check your connection",
           0,
-          'NETWORK_ERROR',
+          "NETWORK_ERROR",
           error
         );
       }
@@ -376,7 +407,7 @@ class ApiClient {
       status === 500 || // Internal Server Error
       status === 502 || // Bad Gateway
       status === 503 || // Service Unavailable
-      status === 504    // Gateway Timeout
+      status === 504 // Gateway Timeout
     );
   }
 
@@ -398,7 +429,7 @@ class ApiClient {
    * Sleep helper for retry delays
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private serializeParams(params: Record<string, any> | undefined): string {
@@ -414,41 +445,55 @@ class ApiClient {
       // arrays -> repeat key for each item
       if (Array.isArray(val)) {
         for (const v of val) {
-          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`);
+          parts.push(
+            `${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`
+          );
         }
         continue;
       }
 
       // booleans/numbers/dates -> string
       if (val instanceof Date) {
-        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val.toISOString())}`);
+        parts.push(
+          `${encodeURIComponent(key)}=${encodeURIComponent(val.toISOString())}`
+        );
       } else {
-        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(val))}`);
+        parts.push(
+          `${encodeURIComponent(key)}=${encodeURIComponent(String(val))}`
+        );
       }
     }
 
     return parts.length ? `?${parts.join("&")}` : "";
   }
 
-
   /**
    * Build full URL
    */
   private buildURL(endpoint: string): string {
     // Remove leading slash from endpoint if present
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const cleanEndpoint = endpoint.startsWith("/")
+      ? endpoint.slice(1)
+      : endpoint;
 
     // Remove trailing slash from baseURL if present
-    const cleanBaseURL = this.baseURL.endsWith('/')
+    const cleanBaseURL = this.baseURL.endsWith("/")
       ? this.baseURL.slice(0, -1)
       : this.baseURL;
 
     return `${cleanBaseURL}/${cleanEndpoint}`;
   }
 
-  private buildURLWithParams(endpoint: string, params?: Record<string, any>): string {
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const cleanBaseURL = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+  private buildURLWithParams(
+    endpoint: string,
+    params?: Record<string, any>
+  ): string {
+    const cleanEndpoint = endpoint.startsWith("/")
+      ? endpoint.slice(1)
+      : endpoint;
+    const cleanBaseURL = this.baseURL.endsWith("/")
+      ? this.baseURL.slice(0, -1)
+      : this.baseURL;
     const base = `${cleanBaseURL}/${cleanEndpoint}`;
     const qs = this.serializeParams(params);
     return qs ? `${base}${qs}` : base;
@@ -457,7 +502,6 @@ class ApiClient {
   setBaseURL(url: string): void {
     this.baseURL = url;
   }
-
 
   /**
    * Prepare request headers
@@ -469,15 +513,15 @@ class ApiClient {
     const headers = new Headers(customHeaders);
 
     // Set default content type if not already set
-    if (!headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
     }
 
     // Add authorization header if required
     if (requiresAuth) {
       const authHeader = await authUtils.getAuthHeader();
-      if ('Authorization' in authHeader) {
-        headers.set('Authorization', authHeader.Authorization);
+      if ("Authorization" in authHeader) {
+        headers.set("Authorization", authHeader.Authorization);
       }
     }
 
@@ -488,7 +532,7 @@ class ApiClient {
    * Parse response data
    */
   private async parseResponse<T>(response: Response): Promise<T> {
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
 
     // Handle empty responses
     if (response.status === 204 || !contentType) {
@@ -496,12 +540,12 @@ class ApiClient {
     }
 
     // Parse JSON
-    if (contentType?.includes('application/json')) {
+    if (contentType?.includes("application/json")) {
       return response.json();
     }
 
     // Parse text
-    if (contentType?.includes('text/')) {
+    if (contentType?.includes("text/")) {
       return response.text() as T;
     }
 
@@ -520,18 +564,37 @@ class ApiClient {
     let errorDetails: unknown;
 
     try {
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
         errorDetails = await response.json();
-        errorMessage = (errorDetails as { message?: string; detail?: string, error?: string }).message
-          || (errorDetails as { message?: string; detail?: string, error?: string }).detail
-          || (errorDetails as { message?: string; detail?: string, error?: string }).error
-          || errorMessage;
+        errorMessage =
+          (
+            errorDetails as {
+              message?: string;
+              detail?: string;
+              error?: string;
+            }
+          ).message ||
+          (
+            errorDetails as {
+              message?: string;
+              detail?: string;
+              error?: string;
+            }
+          ).detail ||
+          (
+            errorDetails as {
+              message?: string;
+              detail?: string;
+              error?: string;
+            }
+          ).error ||
+          errorMessage;
       } else {
-        errorMessage = await response.text() || errorMessage;
+        errorMessage = (await response.text()) || errorMessage;
       }
     } catch (parseError) {
-      console.error('[ApiClient] Failed to parse error response:', parseError);
+      console.error("[ApiClient] Failed to parse error response:", parseError);
     }
 
     const error = this.createError(
@@ -557,9 +620,9 @@ class ApiClient {
     }
 
     const apiError = this.createError(
-      error instanceof Error ? error.message : 'Unknown error occurred',
+      error instanceof Error ? error.message : "Unknown error occurred",
       0,
-      'NETWORK_ERROR',
+      "NETWORK_ERROR",
       error
     );
 
@@ -592,10 +655,10 @@ class ApiClient {
    */
   private isApiError(error: unknown): error is ApiError {
     return (
-      typeof error === 'object' &&
+      typeof error === "object" &&
       error !== null &&
-      'message' in error &&
-      'status' in error
+      "message" in error &&
+      "status" in error
     );
   }
 
@@ -604,25 +667,25 @@ class ApiClient {
    */
   private getErrorCode(status: number): string {
     const codes: Record<number, string> = {
-      400: 'BAD_REQUEST',
-      401: 'UNAUTHORIZED',
-      403: 'FORBIDDEN',
-      404: 'NOT_FOUND',
-      409: 'CONFLICT',
-      422: 'VALIDATION_ERROR',
-      429: 'RATE_LIMIT_EXCEEDED',
-      500: 'INTERNAL_SERVER_ERROR',
-      502: 'BAD_GATEWAY',
-      503: 'SERVICE_UNAVAILABLE',
+      400: "BAD_REQUEST",
+      401: "UNAUTHORIZED",
+      403: "FORBIDDEN",
+      404: "NOT_FOUND",
+      409: "CONFLICT",
+      422: "VALIDATION_ERROR",
+      429: "RATE_LIMIT_EXCEEDED",
+      500: "INTERNAL_SERVER_ERROR",
+      502: "BAD_GATEWAY",
+      503: "SERVICE_UNAVAILABLE",
     };
-    return codes[status] || 'UNKNOWN_ERROR';
+    return codes[status] || "UNKNOWN_ERROR";
   }
 
   /**
    * Log error
    */
   private logError(error: ApiError): void {
-    console.error('[ApiClient] Request failed:', {
+    console.error("[ApiClient] Request failed:", {
       message: error.message,
       status: error.status,
       code: error.code,
@@ -657,21 +720,33 @@ export const configureApiClient = (config: {
   }
 };
 
-
 // Export convenience methods
 export const api = {
-  get: <T, P = Record<string, any>>(endpoint: string, config?: ApiRequestConfig<P>) =>
-    apiClient.get<T, P>(endpoint, config),
+  get: <T, P = Record<string, any>>(
+    endpoint: string,
+    config?: ApiRequestConfig<P>
+  ) => apiClient.get<T, P>(endpoint, config),
 
-  post: <T, P = Record<string, any>>(endpoint: string, data?: unknown, config?: ApiRequestConfig<P>) =>
-    apiClient.post<T, P>(endpoint, data, config),
+  post: <T, P = Record<string, any>>(
+    endpoint: string,
+    data?: unknown,
+    config?: ApiRequestConfig<P>
+  ) => apiClient.post<T, P>(endpoint, data, config),
 
-  put: <T, P = Record<string, any>>(endpoint: string, data?: unknown, config?: ApiRequestConfig<P>) =>
-    apiClient.put<T, P>(endpoint, data, config),
+  put: <T, P = Record<string, any>>(
+    endpoint: string,
+    data?: unknown,
+    config?: ApiRequestConfig<P>
+  ) => apiClient.put<T, P>(endpoint, data, config),
 
-  patch: <T, P = Record<string, any>>(endpoint: string, data?: unknown, config?: ApiRequestConfig<P>) =>
-    apiClient.patch<T, P>(endpoint, data, config),
+  patch: <T, P = Record<string, any>>(
+    endpoint: string,
+    data?: unknown,
+    config?: ApiRequestConfig<P>
+  ) => apiClient.patch<T, P>(endpoint, data, config),
 
-  delete: <T, P = Record<string, any>>(endpoint: string, config?: ApiRequestConfig<P>) =>
-    apiClient.delete<T, P>(endpoint, config),
+  delete: <T, P = Record<string, any>>(
+    endpoint: string,
+    config?: ApiRequestConfig<P>
+  ) => apiClient.delete<T, P>(endpoint, config),
 };

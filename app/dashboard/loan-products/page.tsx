@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/lib/api/auth/authContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import {
@@ -25,6 +24,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 interface ProductFormData {
@@ -38,6 +38,19 @@ interface ProductFormData {
   repayment_frequency: RepaymentFrequency;
   risk_level: LoanProductRiskLevel;
   is_active: boolean;
+}
+
+interface FormErrors {
+  name?: string;
+  description?: string;
+  interest_rate?: string;
+  min_amount?: string;
+  max_amount?: string;
+  min_tenure_months?: string;
+  max_tenure_months?: string;
+  repayment_frequency?: string;
+  risk_level?: string;
+  general?: string;
 }
 
 const INITIAL_FORM_DATA: ProductFormData = {
@@ -54,7 +67,6 @@ const INITIAL_FORM_DATA: ProductFormData = {
 };
 
 export default function LoanProductsPage() {
-  const { user } = useAuth();
   const [products, setProducts] = useState<LoanProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<LoanProductConfig | null>(null);
@@ -78,6 +90,7 @@ export default function LoanProductsPage() {
 
   // Form & Actions
   const [formData, setFormData] = useState<ProductFormData>(INITIAL_FORM_DATA);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
 
   // Filters
@@ -117,21 +130,165 @@ export default function LoanProductsPage() {
       setCurrentPage(filters.page || 1);
     } catch (err: any) {
       console.error("Failed to load products:", err);
-      toast.error("Failed to load loan products");
+      toast.error(err?.message || "Failed to load loan products");
     } finally {
       setLoading(false);
     }
   };
 
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      errors.name = "Product name is required";
+    } else if (formData.name.trim().length < 3) {
+      errors.name = "Product name must be at least 3 characters";
+    } else if (formData.name.trim().length > 100) {
+      errors.name = "Product name must not exceed 100 characters";
+    }
+
+    // Description validation
+    if (formData.description.trim().length > 500) {
+      errors.description = "Description must not exceed 500 characters";
+    }
+
+    // Interest rate validation (must be between 0-100% which is 0-1 in backend)
+    const interestRate = parseFloat(formData.interest_rate);
+    if (!formData.interest_rate || isNaN(interestRate)) {
+      errors.interest_rate = "Interest rate is required";
+    } else if (interestRate < 0) {
+      errors.interest_rate = "Interest rate cannot be negative";
+    } else if (interestRate > 100) {
+      errors.interest_rate = "Interest rate cannot exceed 100%";
+    } else if (interestRate === 0) {
+      errors.interest_rate = "Interest rate must be greater than 0%";
+    }
+
+    // Amount validation with config
+    const minAmount = parseFloat(formData.min_amount);
+    const maxAmount = parseFloat(formData.max_amount);
+
+    if (!formData.min_amount || isNaN(minAmount)) {
+      errors.min_amount = "Minimum amount is required";
+    } else if (minAmount <= 0) {
+      errors.min_amount = "Minimum amount must be greater than 0";
+    } else if (config && minAmount < parseFloat(config.MIN_AMOUNT_LOANABLE)) {
+      errors.min_amount = `Minimum amount cannot be less than ${formatAmount(
+        config.MIN_AMOUNT_LOANABLE
+      )}`;
+    }
+
+    if (!formData.max_amount || isNaN(maxAmount)) {
+      errors.max_amount = "Maximum amount is required";
+    } else if (maxAmount <= 0) {
+      errors.max_amount = "Maximum amount must be greater than 0";
+    } else if (config && maxAmount > parseFloat(config.MAX_AMOUNT_LOANABLE)) {
+      errors.max_amount = `Maximum amount cannot exceed ${formatAmount(
+        config.MAX_AMOUNT_LOANABLE
+      )}`;
+    } else if (!isNaN(minAmount) && maxAmount <= minAmount) {
+      errors.max_amount = "Maximum amount must be greater than minimum amount";
+    }
+
+    // Tenure validation with config
+    const minTenure = parseInt(formData.min_tenure_months);
+    const maxTenure = parseInt(formData.max_tenure_months);
+
+    if (!formData.min_tenure_months || isNaN(minTenure)) {
+      errors.min_tenure_months = "Minimum tenure is required";
+    } else if (minTenure < 1) {
+      errors.min_tenure_months = "Minimum tenure must be at least 1 month";
+    }
+
+    if (!formData.max_tenure_months || isNaN(maxTenure)) {
+      errors.max_tenure_months = "Maximum tenure is required";
+    } else if (maxTenure < 1) {
+      errors.max_tenure_months = "Maximum tenure must be at least 1 month";
+    } else if (config && maxTenure > config.MAX_MONTHS_FOR_LOAN) {
+      errors.max_tenure_months = `Maximum tenure cannot exceed ${config.MAX_MONTHS_FOR_LOAN} months`;
+    } else if (!isNaN(minTenure) && maxTenure < minTenure) {
+      errors.max_tenure_months =
+        "Maximum tenure must be greater than or equal to minimum tenure";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleBackendError = (err: any) => {
+    const errors: FormErrors = {};
+
+    // Check if error has details with field-specific errors
+    if (err?.details && typeof err.details === "object") {
+      const details = err.details as Record<string, any>;
+
+      // Map backend field names to form field names
+      Object.keys(details).forEach((key) => {
+        const errorValue = details[key];
+        let errorMessage = "";
+
+        if (Array.isArray(errorValue)) {
+          errorMessage = errorValue[0];
+        } else if (typeof errorValue === "string") {
+          errorMessage = errorValue;
+        } else if (errorValue?.message) {
+          errorMessage = errorValue.message;
+        }
+
+        // Map backend fields to frontend fields
+        if (key === "name") errors.name = errorMessage;
+        else if (key === "description") errors.description = errorMessage;
+        else if (key === "interest_rate") errors.interest_rate = errorMessage;
+        else if (key === "min_amount") errors.min_amount = errorMessage;
+        else if (key === "max_amount") errors.max_amount = errorMessage;
+        else if (key === "min_tenure_months")
+          errors.min_tenure_months = errorMessage;
+        else if (key === "max_tenure_months")
+          errors.max_tenure_months = errorMessage;
+        else if (key === "repayment_frequency")
+          errors.repayment_frequency = errorMessage;
+        else if (key === "risk_level") errors.risk_level = errorMessage;
+        else if (key === "non_field_errors" || key === "detail") {
+          errors.general = errorMessage;
+        } else {
+          // Any other field errors go to general
+          if (!errors.general) errors.general = errorMessage;
+        }
+      });
+    }
+
+    // If no field-specific errors, show general message
+    if (Object.keys(errors).length === 0) {
+      errors.general = err?.message || "An error occurred. Please try again.";
+    }
+
+    setFormErrors(errors);
+
+    // Only show toast for general errors, not field-specific ones
+    if (errors.general) {
+      toast.error(errors.general);
+    }
+  };
+
   const handleCreateProduct = async () => {
-    if (!validateForm()) return;
+    // Clear previous errors
+    setFormErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setIsSaving(true);
+
+      // Convert percentage to ratio (50% -> 0.5)
+      const interestRateRatio = parseFloat(formData.interest_rate) / 100;
+
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        interest_rate: formData.interest_rate,
+        interest_rate: interestRateRatio.toString(),
         min_amount: formData.min_amount,
         max_amount: formData.max_amount,
         min_tenure_months: parseInt(formData.min_tenure_months),
@@ -145,24 +302,36 @@ export default function LoanProductsPage() {
       toast.success("Loan product created successfully!");
       setShowCreateModal(false);
       setFormData(INITIAL_FORM_DATA);
+      setFormErrors({});
       loadProducts();
     } catch (err: any) {
       console.error("Create error:", err);
-      toast.error(err?.message || "Failed to create loan product");
+      handleBackendError(err);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleUpdateProduct = async () => {
-    if (!editingProduct || !validateForm()) return;
+    if (!editingProduct) return;
+
+    // Clear previous errors
+    setFormErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setIsSaving(true);
+
+      // Convert percentage to ratio (50% -> 0.5)
+      const interestRateRatio = parseFloat(formData.interest_rate) / 100;
+
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        interest_rate: formData.interest_rate,
+        interest_rate: interestRateRatio.toString(),
         min_amount: formData.min_amount,
         max_amount: formData.max_amount,
         min_tenure_months: parseInt(formData.min_tenure_months),
@@ -176,10 +345,11 @@ export default function LoanProductsPage() {
       toast.success("Loan product updated successfully!");
       setEditingProduct(null);
       setFormData(INITIAL_FORM_DATA);
+      setFormErrors({});
       loadProducts();
     } catch (err: any) {
       console.error("Update error:", err);
-      toast.error(err?.message || "Failed to update loan product");
+      handleBackendError(err);
     } finally {
       setIsSaving(false);
     }
@@ -210,60 +380,18 @@ export default function LoanProductsPage() {
       loadProducts();
     } catch (err: any) {
       console.error("Toggle error:", err);
-      toast.error("Failed to update product status");
+      toast.error(err?.message || "Failed to update product status");
     }
-  };
-
-  const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
-      toast.error("Please enter a product name");
-      return false;
-    }
-    if (!formData.interest_rate || isNaN(parseFloat(formData.interest_rate))) {
-      toast.error("Please enter a valid interest rate");
-      return false;
-    }
-    if (!formData.min_amount || isNaN(parseFloat(formData.min_amount))) {
-      toast.error("Please enter a valid minimum amount");
-      return false;
-    }
-    if (!formData.max_amount || isNaN(parseFloat(formData.max_amount))) {
-      toast.error("Please enter a valid maximum amount");
-      return false;
-    }
-    if (parseFloat(formData.min_amount) > parseFloat(formData.max_amount)) {
-      toast.error("Minimum amount cannot exceed maximum amount");
-      return false;
-    }
-    if (
-      !formData.min_tenure_months ||
-      parseInt(formData.min_tenure_months) < 1
-    ) {
-      toast.error("Please enter a valid minimum tenure");
-      return false;
-    }
-    if (
-      !formData.max_tenure_months ||
-      parseInt(formData.max_tenure_months) < 1
-    ) {
-      toast.error("Please enter a valid maximum tenure");
-      return false;
-    }
-    if (
-      parseInt(formData.min_tenure_months) >
-      parseInt(formData.max_tenure_months)
-    ) {
-      toast.error("Minimum tenure cannot exceed maximum tenure");
-      return false;
-    }
-    return true;
   };
 
   const openEditModal = (product: LoanProduct) => {
+    // Convert ratio to percentage for display (0.5 -> 50)
+    const interestRatePercentage = parseFloat(product.interest_rate) * 100;
+
     setFormData({
       name: product.name,
       description: product.description,
-      interest_rate: product.interest_rate,
+      interest_rate: interestRatePercentage.toString(),
       min_amount: product.min_amount,
       max_amount: product.max_amount,
       min_tenure_months: product.min_tenure_months.toString(),
@@ -272,6 +400,7 @@ export default function LoanProductsPage() {
       risk_level: product.risk_level,
       is_active: product.is_active,
     });
+    setFormErrors({});
     setEditingProduct(product);
   };
 
@@ -288,8 +417,8 @@ export default function LoanProductsPage() {
   const formatInterestRate = (rate: string) => {
     const num = parseFloat(rate);
     if (isNaN(num)) return "—";
-    if (num <= 1) return `${(num * 100).toFixed(2)}%`;
-    return `${num.toFixed(2)}%`;
+    // Backend stores as ratio (0.05 = 5%), display as percentage
+    return `${(num * 100).toFixed(2)}%`;
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,6 +428,13 @@ export default function LoanProductsPage() {
 
   const handlePageChange = (page: number) => {
     setFilters({ ...filters, page });
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setEditingProduct(null);
+    setFormData(INITIAL_FORM_DATA);
+    setFormErrors({});
   };
 
   return (
@@ -311,18 +447,25 @@ export default function LoanProductsPage() {
             Manage loan products available to customers
           </p>
           {config && (
-            <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
-              <span>
-                Max Tenure: <strong>{config.MAX_MONTHS_FOR_LOAN} months</strong>
-              </span>
-              <span>
-                Min Amount:{" "}
-                <strong>{formatAmount(config.MIN_AMOUNT_LOANABLE)}</strong>
-              </span>
-              <span>
-                Max Amount:{" "}
-                <strong>{formatAmount(config.MAX_AMOUNT_LOANABLE)}</strong>
-              </span>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <span className="text-blue-600 font-medium">Max Tenure:</span>{" "}
+                <span className="text-blue-900 font-semibold">
+                  {config.MAX_MONTHS_FOR_LOAN} months
+                </span>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <span className="text-green-600 font-medium">Min Amount:</span>{" "}
+                <span className="text-green-900 font-semibold">
+                  {formatAmount(config.MIN_AMOUNT_LOANABLE)}
+                </span>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
+                <span className="text-purple-600 font-medium">Max Amount:</span>{" "}
+                <span className="text-purple-900 font-semibold">
+                  {formatAmount(config.MAX_AMOUNT_LOANABLE)}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -627,6 +770,7 @@ export default function LoanProductsPage() {
       </div>
 
       {/* Create/Edit Modal */}
+      {/* Create/Edit Modal */}
       <AnimatePresence>
         {(showCreateModal || editingProduct) && (
           <motion.div
@@ -634,11 +778,7 @@ export default function LoanProductsPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => {
-              setShowCreateModal(false);
-              setEditingProduct(null);
-              setFormData(INITIAL_FORM_DATA);
-            }}
+            onClick={handleCloseModal}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -652,11 +792,7 @@ export default function LoanProductsPage() {
                   {editingProduct ? "Edit Loan Product" : "Create Loan Product"}
                 </h2>
                 <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingProduct(null);
-                    setFormData(INITIAL_FORM_DATA);
-                  }}
+                  onClick={handleCloseModal}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-5 w-5" />
@@ -664,6 +800,19 @@ export default function LoanProductsPage() {
               </div>
 
               <div className="p-6 space-y-4">
+                {/* General Error */}
+                {formErrors.general && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-red-800">Error</p>
+                      <p className="text-sm text-red-700 mt-1">
+                        {formErrors.general}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -672,12 +821,23 @@ export default function LoanProductsPage() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (formErrors.name) {
+                          setFormErrors({ ...formErrors, name: undefined });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="e.g., Personal Loan"
                     />
+                    {formErrors.name && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.name}
+                      </p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -686,16 +846,40 @@ export default function LoanProductsPage() {
                     </label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           description: e.target.value,
-                        })
-                      }
+                        });
+                        if (formErrors.description) {
+                          setFormErrors({
+                            ...formErrors,
+                            description: undefined,
+                          });
+                        }
+                      }}
                       rows={3}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.description
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="Describe the loan product..."
+                      maxLength={500}
                     />
+                    <div className="flex items-center justify-between mt-1">
+                      <div>
+                        {formErrors.description && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            {formErrors.description}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {formData.description.length}/500
+                      </p>
+                    </div>
                   </div>
 
                   <div>
@@ -705,16 +889,37 @@ export default function LoanProductsPage() {
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
+                      max="100"
                       value={formData.interest_rate}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           interest_rate: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        });
+                        if (formErrors.interest_rate) {
+                          setFormErrors({
+                            ...formErrors,
+                            interest_rate: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.interest_rate
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="e.g., 5.5"
                     />
+                    {formErrors.interest_rate && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.interest_rate}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Enter as percentage (0-100%)
+                    </p>
                   </div>
 
                   <div>
@@ -723,20 +928,36 @@ export default function LoanProductsPage() {
                     </label>
                     <select
                       value={formData.repayment_frequency}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           repayment_frequency: e.target
                             .value as RepaymentFrequency,
-                        })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        });
+                        if (formErrors.repayment_frequency) {
+                          setFormErrors({
+                            ...formErrors,
+                            repayment_frequency: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.repayment_frequency
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       <option value="MONTHLY">Monthly</option>
                       <option value="WEEKLY">Weekly</option>
                       <option value="BIWEEKLY">Bi-weekly</option>
                       <option value="NONE">None</option>
                     </select>
+                    {formErrors.repayment_frequency && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.repayment_frequency}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -746,13 +967,38 @@ export default function LoanProductsPage() {
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
                       value={formData.min_amount}
-                      onChange={(e) =>
-                        setFormData({ ...formData, min_amount: e.target.value })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          min_amount: e.target.value,
+                        });
+                        if (formErrors.min_amount) {
+                          setFormErrors({
+                            ...formErrors,
+                            min_amount: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.min_amount
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="50000"
                     />
+                    {formErrors.min_amount && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.min_amount}
+                      </p>
+                    )}
+                    {config && !formErrors.min_amount && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Min: {formatAmount(config.MIN_AMOUNT_LOANABLE)}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -762,13 +1008,38 @@ export default function LoanProductsPage() {
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
                       value={formData.max_amount}
-                      onChange={(e) =>
-                        setFormData({ ...formData, max_amount: e.target.value })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          max_amount: e.target.value,
+                        });
+                        if (formErrors.max_amount) {
+                          setFormErrors({
+                            ...formErrors,
+                            max_amount: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.max_amount
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="500000"
                     />
+                    {formErrors.max_amount && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.max_amount}
+                      </p>
+                    )}
+                    {config && !formErrors.max_amount && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Max: {formatAmount(config.MAX_AMOUNT_LOANABLE)}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -777,16 +1048,33 @@ export default function LoanProductsPage() {
                     </label>
                     <input
                       type="number"
+                      min="1"
                       value={formData.min_tenure_months}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           min_tenure_months: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        });
+                        if (formErrors.min_tenure_months) {
+                          setFormErrors({
+                            ...formErrors,
+                            min_tenure_months: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.min_tenure_months
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="3"
                     />
+                    {formErrors.min_tenure_months && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.min_tenure_months}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -795,16 +1083,38 @@ export default function LoanProductsPage() {
                     </label>
                     <input
                       type="number"
+                      min="1"
                       value={formData.max_tenure_months}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           max_tenure_months: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        });
+                        if (formErrors.max_tenure_months) {
+                          setFormErrors({
+                            ...formErrors,
+                            max_tenure_months: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.max_tenure_months
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="12"
                     />
+                    {formErrors.max_tenure_months && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.max_tenure_months}
+                      </p>
+                    )}
+                    {config && !formErrors.max_tenure_months && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Max: {config.MAX_MONTHS_FOR_LOAN} months
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -813,18 +1123,34 @@ export default function LoanProductsPage() {
                     </label>
                     <select
                       value={formData.risk_level}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           risk_level: e.target.value as LoanProductRiskLevel,
-                        })
-                      }
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        });
+                        if (formErrors.risk_level) {
+                          setFormErrors({
+                            ...formErrors,
+                            risk_level: undefined,
+                          });
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                        formErrors.risk_level
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       <option value="LOW">Low</option>
                       <option value="MEDIUM">Medium</option>
                       <option value="HIGH">High</option>
                     </select>
+                    {formErrors.risk_level && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {formErrors.risk_level}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center">
@@ -850,11 +1176,7 @@ export default function LoanProductsPage() {
 
               <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
                 <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingProduct(null);
-                    setFormData(INITIAL_FORM_DATA);
-                  }}
+                  onClick={handleCloseModal}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
                 >
                   Cancel

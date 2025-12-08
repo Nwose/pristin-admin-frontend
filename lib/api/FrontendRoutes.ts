@@ -16,6 +16,7 @@ export const Routes = {
 
   // Loans
   loans: "/dashboard/loans",
+  loanApplications: "/dashboard/loan-applications",
   loanDetail: (id: string | number) => `/dashboard/loans/${id}`,
 
   // Loan Products

@@ -1,4 +1,6 @@
 // src/app/admin/users/page.tsx
+"use client";
+
 import CustomerTable from "@/components/users/CustomerTable";
 import { useAuth } from "@/lib/api/auth/authContext";
 
