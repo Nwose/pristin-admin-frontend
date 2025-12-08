@@ -41,7 +41,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center md:justify-start">
             {/* Link to Sign Up */}
-            <Link href="/coming-soon">
+            <Link href="/auth/login">
               <button className="w-full sm:w-auto bg-[#012638] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg shadow hover:bg-[#019893] transition-colors">
                 Get Started Now &rarr;
               </button>
