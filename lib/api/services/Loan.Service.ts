@@ -233,7 +233,7 @@ export class LoanApplicationService {
 
   static async rejectLoanApplication(
     id: string,
-    data: { rejection_reason: string }
+    data: { reason: string, application_id: string }
   ) {
     const res = await apiClient.post(
       BackendRoutes.rejectLoanApplication(id),

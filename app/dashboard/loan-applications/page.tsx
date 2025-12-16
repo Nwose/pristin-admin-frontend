@@ -161,7 +161,8 @@ export default function LoanApplicationsPage() {
       await LoanApplicationService.rejectLoanApplication(
         rejectingApplication.id,
         {
-          rejection_reason: rejectionReason.trim(),
+          reason: rejectionReason.trim(),
+          application_id: rejectingApplication.id,
         }
       );
       toast.success("Loan application rejected");
@@ -194,9 +195,6 @@ export default function LoanApplicationsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-
-    // Debounce search or implement search button
-    // For now, just update the state
   };
 
   const handleSearch = () => {
@@ -277,11 +275,6 @@ export default function LoanApplicationsPage() {
         {status}
       </span>
     );
-  };
-
-  const getProductName = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    return product?.name || "Unknown Product";
   };
 
   const openRejectModal = (application: LoanApplication) => {
@@ -557,7 +550,7 @@ export default function LoanApplicationsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {getProductName(application.product_id)}
+                            {application.product.name}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -743,7 +736,7 @@ export default function LoanApplicationsPage() {
                     <div className="bg-gray-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">Product</p>
                       <p className="text-lg font-semibold text-gray-900 mt-1">
-                        {getProductName(viewingApplication.product_id)}
+                        {viewingApplication.product.name}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4">
@@ -904,7 +897,7 @@ export default function LoanApplicationsPage() {
                 <p>
                   <span className="text-gray-500">Product:</span>{" "}
                   <span className="font-medium">
-                    {getProductName(approvingApplication.product_id)}
+                    {approvingApplication.product.name}
                   </span>
                 </p>
               </div>
