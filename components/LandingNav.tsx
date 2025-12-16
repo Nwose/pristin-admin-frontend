@@ -59,7 +59,7 @@ export default function LandingNav() {
           </Link>
 
           <Link
-            href="/coming-soon"
+            href="/auth/login"
             className="bg-[#012638] text-white px-6 py-2 rounded font-semibold text-lg hover:bg-[#019893] transition-colors"
           >
             Get Started
@@ -109,7 +109,7 @@ export default function LandingNav() {
           </Link>
 
           <Link
-            href="/coming-soon"
+            href="/auth/login"
             className="bg-[#012638] text-white px-6 py-2 rounded font-semibold text-lg hover:bg-[#019893] transition-colors"
             onClick={() => setIsOpen(false)}
           >
