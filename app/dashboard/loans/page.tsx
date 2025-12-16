@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {FrontendRoutes} from "@/lib/api/FrontendRoutes";
 import { useAuth } from "@/lib/api/auth/authContext";
 import * as ls from "@/lib/api/services/Loan.Service";
 
@@ -354,12 +356,12 @@ export default function AdminLoans() {
                           {formatDate(loan.end_date)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => viewLoanDetails(loan.id)}
+                          <Link
+                            href={FrontendRoutes.loanDetail(loan.id)}
                             className="text-teal-600 hover:text-teal-900 transition-colors"
                           >
                             View Details
-                          </button>
+                          </Link>
                         </td>
                       </tr>
                     ))}
