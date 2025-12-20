@@ -14,6 +14,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { Routes } from "../FrontendRoutes";
@@ -31,6 +32,8 @@ import {
   LoginCredentialsType,
   RegisterDataType,
 } from "../types/auth";
+
+
 
 export interface ApiErrorType {
   message: string;
@@ -60,6 +63,7 @@ export function isApiErrorType(error: unknown): error is ApiErrorType {
     (!("details" in error) || true) // details can be anything
   );
 }
+
 
 // Auth Store State
 interface AuthState {
@@ -122,6 +126,7 @@ export interface AuthContextType {
   fetchCurrentUser: () => Promise<void>;
   clearError: () => void;
   updatePartialUser: (partialUser: PartialUser) => void;
+  doAuthCheck: () => Promise<void>;
 }
 
 // Create context
@@ -208,25 +213,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   };
 
+  const doAuthCheck = async () => {
+    const next = `${Routes.login}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    if (!authUtils.isAuthenticated() && !isLoading) {
+      router.replace(next);
+    }
+  }
+
   /**
    * Fetch current user data
    */
   const fetchCurrentUser = async (): Promise<void> => {
     try {
       const response = await api.get<UserType>(BackendRoutes.me);
+      setUser(response.data);
       updatePartialUser({
         email: response.data.email,
         phone: response.data.phone_number,
         is_email_verified: response.data.is_email_verified,
         is_phone_verified: response.data.is_phone_number_verified,
       });
-      if (!response.data.is_staff) {
-        // log the user out
-        authUtils.logout();
-        setUser(null);
-        throw new Error("Unauthorized Access - Staff Only");
-      }
-      setUser(response.data);
       setError(null);
     } catch (error) {
       console.error("[Auth] Failed to fetch user:", error);
@@ -385,6 +391,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     clearError,
     partialUser,
     updatePartialUser,
+    doAuthCheck,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -442,10 +449,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = Routes.login,
 }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = redirectTo;
+      const next = `${Routes.login}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      router.push(next);
     }
   }, [isAuthenticated, isLoading, redirectTo]);
 

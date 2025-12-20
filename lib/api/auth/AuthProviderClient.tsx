@@ -15,7 +15,8 @@ export function AuthProviderClient({
     <AuthProvider
       onLogout={() => {
         console.log("User logged out");
-        router.push(Routes.login);
+        const next = `${Routes.login}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        router.replace(next || Routes.login);
       }}
     >
       {children}

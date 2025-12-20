@@ -6,6 +6,7 @@ import VerificationErrorModal, {
   VerificationStatus,
 } from "@/components/auth/VerificationErrorModal";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/api/auth/authContext";
 import { authUtils, TokenResponse } from "@/lib/api/auth/TokenManager";
@@ -52,6 +53,7 @@ function isAboutResourceVerification(
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const auth = useAuth();
   const {
     user,
@@ -62,6 +64,11 @@ export default function Login() {
     partialUser,
     updatePartialUser,
   } = auth;
+    const next = (() => {
+    const n = searchParams.get("next");
+    if (!n || !n.startsWith("/")) return FrontendRoutes.dashboard;
+    return n;
+  })();
 
   const [email, setEmail] = useState(partialUser?.email || "");
   const [password, setPassword] = useState("");
@@ -80,15 +87,14 @@ export default function Login() {
   const [hasTfaToken, setHasTfaToken] = useState(false);
 
   useEffect(() => {
-    if (authUtils.isAuthenticated()) {
-      toastFn.success("User is already logged in, redirecting to dashboard.");
-      router.push(FrontendRoutes.dashboard);
+    if (authUtils.isAuthenticated() && user) {
+      router.push(next);
     }
     const t =
       typeof window !== "undefined" ? localStorage.getItem("tfa_token") : null;
     const k = t && partialUser?.tfa_token === t;
     setHasTfaToken(Boolean(k));
-  }, []);
+  }, [user, router]);
 
   // Clear context error when user edits inputs
   useEffect(() => {
@@ -125,7 +131,7 @@ export default function Login() {
       // but avoid double-redirect: if the provider already redirects, this push will be harmless.
       if (!localStorage.getItem("tfa_token") || user) {
         // send user to dashboard/home after successful full-login
-        router.push(Routes.dashboard);
+        router.push(next);
       } else {
         // provider probably redirected to 2FA already; ensure user lands on the 2FA page
         router.push(Routes.loginSecondFactor);

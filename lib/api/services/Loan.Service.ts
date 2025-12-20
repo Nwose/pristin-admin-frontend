@@ -410,7 +410,10 @@ export class LoanApplicationService {
   }): Promise<LoanApplication> {
     const res = await apiClient.post<LoanApplication>(
       BackendRoutes.createLoanApplication,
-      payload,
+      {
+        ...payload,
+        product_id: payload.product,
+      },
       { requiresAuth: true }
     );
 
