@@ -1,8 +1,58 @@
 // lib/api/services/Loan.Service.ts
 import { apiClient } from "../ApiClient";
 import { BackendRoutes } from "../BackendRoutes";
-import { ApiResponse } from "../ApiClient";
 import { UserType } from "../types/auth";
+
+
+/* -------------------- ENUMS -------------------- */
+export type LoanStatus =
+  | "UNDISBURSED"
+  | "ACTIVE"
+  | "PAID"
+  | "DEFAULTED"
+  | "CANCELLED";
+
+export type DecimalString = string;
+
+export type UUID = string;
+
+export type ISODateString = string;
+
+
+export type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type RepaymentStatus = "PENDING" | "PAID" | "OVERDUE";
+
+export type LoanProductRiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+export type RepaymentFrequency = "NONE" | "MONTHLY" | "WEEKLY" | "BIWEEKLY";
+
+
+export enum DisbursementQueueStatusEnum {
+  QUEUED = "QUEUED",
+  PROCESSING = "PROCESSING",
+  DISBURSED = "DISBURSED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum DisbursementMethodEnum {
+  WALLET = "WALLET",
+  BANK = "BANK",
+  MANUAL = "MANUAL",
+}
+
+
+
+/* -------------------- USER -------------------- */
+export interface PublicUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  profile_picture: string | null;
+}
+
+/* -------------------- LOAN -------------------- */
 
 export interface Loan {
   id: string;
@@ -26,7 +76,7 @@ export interface Loan {
 /* -------------------- APPLICATION -------------------- */
 export interface LoanApplication {
   id: string;
-  user: MinimalUser;
+  user: PublicUser;
   product: LoanProduct;
   status: ApplicationStatus;
   status_display: string;
@@ -53,6 +103,8 @@ export interface LoanRepayment {
   payment_reference: string;
 }
 
+/* -------------------- LOAN PRODUCT -------------------- */
+
 export interface LoanProduct {
   id: string;
   name: string;
@@ -75,47 +127,119 @@ export interface LoanProductConfig {
   MAX_AMOUNT_LOANABLE: string;
 }
 
-export interface MinimalUser {
-  id: string;
-  first_name: string;
-  last_name: string;
-  profile_picture: string | null;
+
+// -------------------- DISBURSEMENT QUEUE --------------------
+
+export interface DisbursementQueueSerializer {
+  loan_id: string;
 }
 
-export interface PaginatedAnything<T> {
+
+export interface DisbursementQueue {
+  id: UUID;
+  loan: Loan;
+  user: PublicUser;
+  added_by: PublicUser;
+  status: DisbursementQueueStatusEnum;
+  status_display: string;
+  amount: string;
+  method: DisbursementMethodEnum;
+  method_display: string;
+  notes?: string;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+}
+
+export interface DisbursementQueueDetail {
+  id: UUID;
+  loan: Loan;
+
+  status: string;
+  status_display: string;
+
+  method: string;
+  method_display: string;
+
+  notes?: string;
+
+  added_by: PublicUser;
+
+  created_at: ISODateString;
+  updated_at: ISODateString;
+}
+
+export interface AddToDisbursementQueueResponse {
+  status: "success";
+  message: string;
+  queue_entry: DisbursementQueueDetail;
+}
+
+export interface ProcessDisbursementResponse {
+  status: "success";
+  message: string;
+  disbursement: DisbursementQueueDetail;
+}
+
+export interface BulkProcessDisbursementsResponse {
+  status: string;
+  message: string;
+  results: {
+    total: number;
+    successful: ({
+      queue_id: UUID;
+      loan_id: UUID;
+      reference: string;
+    })[];
+    failed: ({
+      queue_id: UUID;
+      error: string;
+    })[];
+  };
+}
+
+export interface CancelDisbursementResponse {
+  status: "success";
+  message: string; // disbursment for ... has been cancelled
+}
+// -------------------- DISBURSEMENT QUEUE PAYLOADS --------------------
+
+export interface AddToDisbursementQueuePayload {
+  loan_id: UUID;
+  method?: DisbursementMethodEnum;
+  notes?: string;
+}
+
+export interface ProcessDisbursementPayload {
+  confirm?: boolean;
+}
+
+export interface CancelDisbursementPayload {
+  reason: string;
+}
+
+export interface BulkProcessDisbursementPayload {
+  queue_entry_ids: UUID[];
+}
+
+// -------------------- DISBURSEMENT STATISTICS --------------------
+export interface DisbursementStatisticsItem {
+  amount: string; // decimal
   count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
 }
 
-export interface PaginatedLoans extends PaginatedAnything<Loan> {}
+export interface DisbursementStatistics {
+  total_disbursed: DisbursementStatisticsItem;
+  pending: DisbursementStatisticsItem;
+  today: DisbursementStatisticsItem;
+}
 
-export interface PaginatedLoanApplications
-  extends PaginatedAnything<LoanApplication> {}
-
-export interface PaginatedLoanProducts extends PaginatedAnything<LoanProduct> {}
-
-export interface PaginatedLoanRepayments
-  extends PaginatedAnything<LoanRepayment> {}
-
-/* -------------------- ENUMS -------------------- */
-export type LoanStatus =
-  | "UNDISBURSED"
-  | "ACTIVE"
-  | "PAID"
-  | "DEFAULTED"
-  | "CANCELLED";
-
-export type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
-
-export type RepaymentStatus = "PENDING" | "PAID" | "OVERDUE";
-
-export type LoanProductRiskLevel = "LOW" | "MEDIUM" | "HIGH";
-
-export type RepaymentFrequency = "NONE" | "MONTHLY" | "WEEKLY" | "BIWEEKLY";
+export interface DisbursementStatisticsResponse {
+  status: "success";
+  statistics: DisbursementStatistics;
+}
 
 /* -------------------- FILTERS -------------------- */
+
 export interface LoanFilters {
   status?: string; // LoanStatus
   is_overdue?: boolean;
@@ -158,6 +282,78 @@ export interface LoanRepaymentFilters {
   due_date_before?: string;
   page?: number;
 }
+
+export type DisbursementQueueOrdering =
+  | "created_at"
+  | "-created_at"
+  | "updated_at"
+  | "-updated_at"
+  | "amount"
+  | "-amount"
+  | "status"
+  | "-status";
+
+export interface DisbursementQueueFilter {
+  method?: DisbursementMethodEnum;
+
+  /** UUID of user who added to queue */
+  added_by?: string;
+
+  /** UUID of borrower */
+  user_id?: string;
+
+  /** UUID of loan */
+  loan_id?: string;
+
+  /** Created date range */
+  created_after?: string;   // ISO datetime
+  created_before?: string;  // ISO datetime
+
+  /** Updated date range */
+  updated_after?: string;   // ISO datetime
+  updated_before?: string;  // ISO datetime
+
+  /** Loan amount range */
+  amount_min?: number;
+  amount_max?: number;
+
+  status?: DisbursementQueueStatusEnum;
+
+  /** Multiple statuses (comma-separated on backend) */
+  statuses?: DisbursementQueueStatusEnum[];
+
+  /** Full-text search (name, email, notes) */
+  search?: string;
+
+  /** Ordering */
+  ordering?: DisbursementQueueOrdering;
+}
+
+
+// -------------------- PAGINATION --------------------
+
+export interface PaginatedAnything<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface PaginatedLoans
+  extends PaginatedAnything<Loan> { }
+
+export interface PaginatedLoanApplications
+  extends PaginatedAnything<LoanApplication> { }
+
+export interface PaginatedLoanProducts
+  extends PaginatedAnything<LoanProduct> { }
+
+export interface PaginatedLoanRepayments
+  extends PaginatedAnything<LoanRepayment> { }
+
+export interface PaginatedDisbursementQueue
+  extends PaginatedAnything<DisbursementQueue> { }
+
 
 /* -------------------- SERVICES -------------------- */
 
@@ -213,7 +409,7 @@ export class LoanApplicationService {
     reason: string;
   }): Promise<LoanApplication> {
     const res = await apiClient.post<LoanApplication>(
-      BackendRoutes.creaetLoanApplication,
+      BackendRoutes.createLoanApplication,
       payload,
       { requiresAuth: true }
     );
@@ -233,7 +429,7 @@ export class LoanApplicationService {
 
   static async rejectLoanApplication(
     id: string,
-    data: { reason: string, application_id: string }
+    data: { rejection_reason: string }
   ) {
     const res = await apiClient.post(
       BackendRoutes.rejectLoanApplication(id),
@@ -337,4 +533,121 @@ export class LoanRepaymentService {
   }
 }
 
-export default LoanService;
+
+
+export class DisbursementService {
+  /**
+   * List disbursement queue entries (paginated).
+   * Mirrors: GET /disbursements/ (list)
+   */
+  static async getDisbursements(
+    filters?: DisbursementQueueFilter
+  ): Promise<PaginatedDisbursementQueue> {
+    const res = await apiClient.get<PaginatedDisbursementQueue>(
+      BackendRoutes.getDisbursements,
+      {
+        requiresAuth: true,
+        params: filters,
+      }
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Retrieve a single disbursement queue entry.
+   * Mirrors: GET /disbursements/{id}/ (retrieve)
+   */
+  static async getDisbursement(id: UUID): Promise<DisbursementQueueDetail> {
+    const res = await apiClient.get<DisbursementQueueDetail>(
+      BackendRoutes.getDisbursement(id),
+      { requiresAuth: true }
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Add a loan to the disbursement queue.
+   * Mirrors: POST /disbursements/add-to-queue/
+   * Backend responds with { status, message, queue_entry: DisbursementQueueDetail }
+   */
+  static async addToQueue(
+    payload: AddToDisbursementQueuePayload
+  ): Promise<DisbursementQueueDetail> {
+    const res = await apiClient.post<AddToDisbursementQueueResponse>(
+      BackendRoutes.addToDisbursementQueue, 
+      payload, 
+      { requiresAuth: true }
+    );
+
+    return res.data.queue_entry;
+  }
+
+  /**
+   * Process a queued disbursement.
+   * Mirrors: POST /disbursements/{id}/process/
+   * Backend responds with { status, message, disbursement: <result> }
+   */
+  static async processDisbursement(
+    id: UUID,
+    payload: ProcessDisbursementPayload
+  ): Promise<ProcessDisbursementResponse> {
+    const res = await apiClient.post<ProcessDisbursementResponse>(
+      BackendRoutes.processDisbursement(id),
+      payload,
+      { requiresAuth: true }
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Cancel a queued disbursement.
+   * Mirrors: POST /disbursements/{id}/cancel/
+   * Backend responds with { status, message }
+   */
+  static async cancelDisbursement(
+    id: UUID,
+    payload: CancelDisbursementPayload
+  ): Promise<CancelDisbursementResponse> {
+    const res = await apiClient.post<CancelDisbursementResponse>(
+      BackendRoutes.cancelDisbursement(id),
+      payload,
+      { requiresAuth: true }
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Bulk process disbursements.
+   * Mirrors: POST /disbursements/bulk-process/
+   * Backend responds with { status, message, results }
+   */
+  static async bulkProcessDisbursements(
+    payload: BulkProcessDisbursementPayload
+  ): Promise<BulkProcessDisbursementsResponse> {
+    const res = await apiClient.post<BulkProcessDisbursementsResponse>(
+      BackendRoutes.bulkProcessDisbursement,
+      payload,
+      { requiresAuth: true }
+    );
+
+    return res.data;
+  }
+
+  /**
+   * Get disbursement statistics.
+   * Mirrors: GET /disbursements/statistics/
+   * Backend responds with { status, statistics: DisbursementStatistics }
+   */
+  static async getStatistics(): Promise<DisbursementStatisticsResponse> {
+    const res = await apiClient.get<DisbursementStatisticsResponse>(
+      BackendRoutes.getDisbursementStatistics,
+      { requiresAuth: true }
+    );
+
+    return res.data;
+  }
+}

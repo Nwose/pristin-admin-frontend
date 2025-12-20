@@ -77,7 +77,7 @@ export const BackendRoutes = {
   getLoanApplication: (id: string) => `${baseURL}/loan-application/${id}/`,
   approveLoanApplication: (id: string) => `${baseURL}/loan-application/${id}/approve/`,
   rejectLoanApplication: (id: string) => `${baseURL}/loan-application/${id}/reject/`,
-  creaetLoanApplication: `${baseURL}/loan-application/`,
+  createLoanApplication: `${baseURL}/loan-application/`,
   getLoanProducts: `${baseURL}/loan-product/`,
   getLoanProduct: (id: string) => `${baseURL}/loan-product/${id}/`,
   createLoanProduct : `${baseURL}/loan-product/`,
@@ -86,4 +86,15 @@ export const BackendRoutes = {
   getLoanProductConfig: `${baseURL}/loan-product/get_config/`,
   getLoanRepayments: `${baseURL}/loan-repayment/`,
   getLoanRepayment: (id: string) => `${baseURL}/loan-repayment/${id}/`,
+
+  /* ----------------------------- LOAN DISBURSEMENT ----------------------------- */
+  // Disbursement queue
+  getDisbursements: "/disbursements/",                // GET list
+  getDisbursement: (id: string) => `/disbursements/${id}/`, // GET retrieve
+
+  addToDisbursementQueue: "/disbursements/add-to-queue/",   // POST add to queue
+  processDisbursement: (id: string) => `/disbursements/${id}/process/`, // POST process
+  cancelDisbursement: (id: string) => `/disbursements/${id}/cancel/`,   // POST cancel
+  bulkProcessDisbursement: "/disbursements/bulk-process/", // POST bulk process
+  getDisbursementStatistics: "/disbursements/statistics/", // GET statistics
 };
