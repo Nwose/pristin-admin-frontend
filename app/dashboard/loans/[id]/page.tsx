@@ -171,7 +171,7 @@ export default function LoanDetailPage() {
         {overdueRepayments > 0 && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
@@ -263,7 +263,7 @@ export default function LoanDetailPage() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                   <div
-                    className="h-4 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full transition-all duration-500 ease-out"
+                    className="h-4 bg-linear-to-r from-teal-500 to-teal-600 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${loan.progress}%` }}
                   ></div>
                 </div>
@@ -287,7 +287,7 @@ export default function LoanDetailPage() {
           </div>
 
           {/* Upcoming Payment */}
-          <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-linear-to-br from-teal-600 to-teal-700 rounded-xl shadow-lg p-6 text-white">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -336,7 +336,7 @@ export default function LoanDetailPage() {
                 <div className="flex-1 px-4">
                   <div className="relative h-2 bg-gray-200 rounded-full">
                     <div
-                      className="absolute h-2 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full transition-all duration-500"
+                      className="absolute h-2 bg-linear-to-r from-teal-500 to-teal-600 rounded-full transition-all duration-500"
                       style={{ width: `${loan.progress}%` }}
                     ></div>
                   </div>
@@ -369,17 +369,9 @@ export default function LoanDetailPage() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Borrower</h3>
             <div className="flex items-center mb-4">
-              {loan.user.profile_picture ? (
-                <img
-                  className="h-16 w-16 rounded-full border-2 border-teal-600"
-                  src={loan.user.profile_picture}
-                  alt={`${loan.user.first_name} ${loan.user.last_name}`}
-                />
-              ) : (
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold text-xl border-2 border-teal-600">
-                  {loan.user.first_name[0]}{loan.user.last_name[0]}
-                </div>
-              )}
+              <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold text-xl border-2 border-teal-600">
+                {loan.user.first_name[0]}{loan.user.last_name[0]}
+              </div>
               <div className="ml-4">
                 <p className="text-lg font-semibold text-gray-900">
                   {loan.user.first_name} {loan.user.last_name}

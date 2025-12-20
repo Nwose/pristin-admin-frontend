@@ -524,7 +524,7 @@ export default function LoanApplicationsPage() {
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
+                            <div className="shrink-0 h-10 w-10">
                               {application.user.profile_picture ? (
                                 <img
                                   className="h-10 w-10 rounded-full object-cover"
