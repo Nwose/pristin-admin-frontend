@@ -881,8 +881,8 @@ export default function AdminLoans() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{d.loan.id}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{d.user.first_name} {d.user.last_name}</div>
-                            <div className="text-xs text-gray-500">{d.user.email}</div>
+                            <div className="text-sm font-medium text-gray-900">{d.loan.user.first_name} {d.loan.user.last_name}</div>
+                            <div className="text-xs text-gray-500">{d.loan.user.email}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(d.amount)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{d.method_display || d.method}</td>

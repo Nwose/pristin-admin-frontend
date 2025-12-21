@@ -89,12 +89,12 @@ export const BackendRoutes = {
 
   /* ----------------------------- LOAN DISBURSEMENT ----------------------------- */
   // Disbursement queue
-  getDisbursements: "/disbursements/",                // GET list
-  getDisbursement: (id: string) => `/disbursements/${id}/`, // GET retrieve
+  getDisbursements: "/loan-disbursement/",                // GET list
+  getDisbursement: (id: string) => `/loan-disbursement/${id}/`, // GET retrieve
 
-  addToDisbursementQueue: "/disbursements/add-to-queue/",   // POST add to queue
-  processDisbursement: (id: string) => `/disbursements/${id}/process/`, // POST process
-  cancelDisbursement: (id: string) => `/disbursements/${id}/cancel/`,   // POST cancel
-  bulkProcessDisbursement: "/disbursements/bulk-process/", // POST bulk process
-  getDisbursementStatistics: "/disbursements/statistics/", // GET statistics
+  addToDisbursementQueue: "/loan-disbursement/add-to-queue/",   // POST add to queue
+  processDisbursement: (id: string) => `/loan-disbursement/${id}/process/`, // POST process
+  cancelDisbursement: (id: string) => `/loan-disbursement/${id}/cancel/`,   // POST cancel
+  bulkProcessDisbursement: "/loan-disbursement/bulk-process/", // POST bulk process
+  getDisbursementStatistics: "/loan-disbursement/statistics/", // GET statistics
 };
